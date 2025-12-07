@@ -4,7 +4,6 @@
 
 Microservicio de suscripciones para la plataforma Zabora, orientado solo a pruebas: datos mock, pagos simulados y autenticación básica.
 
-> Importante: No usar claves reales de Stripe ni datos sensibles en este repositorio. Solo se usan tokens de prueba.
 
 ---
 
