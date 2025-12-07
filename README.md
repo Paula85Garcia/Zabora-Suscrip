@@ -1,177 +1,104 @@
-Módulo de Suscripciones - Zabora
-Descripción General
+# Zabora Subscription Service - Entorno de Pruebas
 
-Microservicio de gestión de suscripciones para la plataforma Zabora, implementando un modelo Freemium con pagos manuales (tarjeta/PSE). El servicio maneja todo el ciclo de vida de suscripciones, verificación de estado para otros servicios y facturación.
+![Java](https://img.shields.io/badge/Java-17-blue) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green) ![H2 Database](https://img.shields.io/badge/H2-Database-lightgrey) ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-Funcionalidades Implementadas
-Funcionalidades Completas
+Microservicio de suscripciones para la plataforma Zabora, orientado solo a pruebas: datos mock, pagos simulados y autenticación básica.
 
-Suscripción a planes (Free y Premium)
+> Importante: No usar claves reales de Stripe ni datos sensibles en este repositorio. Solo se usan tokens de prueba.
 
-Cancelación de suscripción con verificación de reembolso (24h)
+---
 
-Verificación de estado para otros microservicios (Recipe Service, Auth Service)
+## Contenido
 
-Procesamiento de pagos manuales (Tarjeta de crédito y PSE)
+<details>
+<summary>Usuarios de Prueba</summary>
 
-Gestión de métodos de pago
+| Usuario | Contraseña | Rol   | Uso recomendado               |
+| ------- | ---------- | ----- | ----------------------------- |
+| admin   | admin123   | ADMIN | Operaciones administrativas   |
+| usuario | usuario123 | USER  | Operaciones de usuario normal |
 
-Datos quemados para pruebas inmediatas
+**Headers requeridos para endpoints protegidos**
 
-Autenticación básica (Spring Security)
-
-Documentación API automática (Swagger/OpenAPI)
-
-Próximas funcionalidades
-
-Integración real con Stripe
-
-Base de datos MySQL persistente
-
-Facturación DIAN
-
-Notificaciones por correo
-
-Reportes administrativos
-
-Stack Tecnológico
-Dependencias principales (pom.xml)
-<!-- Spring Boot Starters -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-web</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-jpa</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-security</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-validation</artifactId>
-</dependency>
-
-<!-- Base de datos -->
-<dependency>
-    <groupId>com.mysql</groupId>
-    <artifactId>mysql-connector-j</artifactId>
-    <scope>runtime</scope>
-</dependency>
-<dependency>
-    <groupId>com.h2database</groupId>
-    <artifactId>h2</artifactId>
-    <scope>runtime</scope>
-</dependency>
-
-<!-- Utilidades -->
-<dependency>
-    <groupId>org.projectlombok</groupId>
-    <artifactId>lombok</artifactId>
-    <optional>true</optional>
-</dependency>
-<dependency>
-    <groupId>com.stripe</groupId>
-    <artifactId>stripe-java</artifactId>
-    <version>24.4.0</version>
-</dependency>
-
-<!-- Documentación -->
-<dependency>
-    <groupId>org.springdoc</groupId>
-    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-    <version>2.5.0</version>
-</dependency>
-
-Configuración de Autenticación
-Usuarios disponibles
-Usuario	Contraseña	Rol	Uso recomendado
-admin	admin123	ADMIN	Operaciones administrativas
-usuario	usuario123	USER	Operaciones de usuario normal
-Configuración en application.properties
-# Configuración básica
-server.port=8080
-server.servlet.context-path=/api
-
-# Base de datos (H2 para desarrollo)
-spring.datasource.url=jdbc:h2:mem:zaboradb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-spring.datasource.driver-class-name=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-
-# JPA/Hibernate
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect
-
-# H2 Console
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-
-# Stripe (modo prueba, usar variables de entorno)
-stripe.clave.secreta=${STRIPE_SECRET_KEY}
-stripe.clave.publica=${STRIPE_PUBLIC_KEY}
-
-
-Importante: Nunca subas tus claves reales. Define las variables de entorno STRIPE_SECRET_KEY y STRIPE_PUBLIC_KEY en tu máquina o contenedor.
-
-📊 Datos Quemados para Pruebas
-Usuarios pre-cargados
-{
-  "usuario_001": {
-    "plan": "premium",
-    "estado": "ACTIVA",
-    "metodos_pago": ["Visa 4242", "PSE Bancolombia"],
-    "suscripcion_id": "sub_001"
-  },
-  "usuario_002": {
-    "plan": "gratuito", 
-    "estado": "ACTIVA",
-    "metodos_pago": [],
-    "suscripcion_id": "sub_002"
-  }
-}
-
-Planes disponibles
-Plan	Precio	Límites
-Gratuito	$0 COP	2 condiciones médicas, 2 alergias, 1 preferencia, 7 ingredientes, 4 recetas favoritas
-Premium	$29,900 COP	3 condiciones médicas, 4 alergias, 1 preferencia, 20 ingredientes, recetas favoritas ilimitadas
-Headers para Pruebas
-Headers requeridos para endpoints protegidos
-Authorization: Basic YWRtaW46YWRtaW4xMjM=
+```
+Authorization: Basic YWRtaW46YWRtaW4xMjM=  # admin
 X-Usuario-Id: [ID_DEL_USUARIO]
-Content-Type: application/json  # Solo para POST/PUT
+Content-Type: application/json  # Para POST/PUT
+```
 
-Tokens Basic Auth pre-generados
+</details>
 
-admin:admin123 → Basic YWRtaW46YWRtaW4xMjM=
+<details>
+<summary>Datos Mock</summary>
 
-usuario:usuario123 → Basic dXN1YXJpbzp1c3VhcmlvMTIz
+### Suscripciones
 
-Endpoints Disponibles
-Públicos (sin autenticación)
+```json
+{
+  "usuario_001": {"plan":"premium","estado":"ACTIVA","metodos_pago":["Visa 4242","PSE Bancolombia"],"suscripcion_id":"sub_001"},
+  "usuario_002": {"plan":"gratuito","estado":"ACTIVA","metodos_pago":[],"suscripcion_id":"sub_002"}
+}
+```
+
+### Planes
+
+| Plan     | Precio      | Límites principales                                                                             |
+| -------- | ----------- | ----------------------------------------------------------------------------------------------- |
+| Gratuito | $0 COP      | 2 condiciones médicas, 2 alergias, 1 preferencia, 7 ingredientes, 4 recetas favoritas           |
+| Premium  | $29,900 COP | 3 condiciones médicas, 4 alergias, 1 preferencia, 20 ingredientes, recetas favoritas ilimitadas |
+
+</details>
+
+<details>
+<summary>Endpoints de Prueba</summary>
+
+### Públicos
+
+```
 GET  /api/suscripciones/datos-mock
-GET  /api/suscripciones/verificar/{id}
 GET  /api/suscripciones/planes
 POST /api/pagos/pago-prueba
 GET  /swagger-ui.html
 GET  /h2-console
+```
 
-Protegidos (requieren autenticación)
+### Protegidos (requieren autenticación)
+
+```
 POST /api/suscripciones/suscribir
 POST /api/suscripciones/cancelar/{id}
 GET  /api/suscripciones/estado
 POST /api/pagos/procesar
 GET  /api/pagos/metodos
 POST /api/pagos/metodos
+```
 
-Ejemplos de Requests/Responses
-Suscribirse a Premium
+</details>
+
+<details>
+<summary>Tokens de Prueba Stripe</summary>
+
+| Token                   | Comportamiento     | Uso recomendado                |
+| ----------------------- | ------------------ | ------------------------------ |
+| tok_visa                | Pago exitoso       | Flujos normales                |
+| tok_visa_chargeDeclined | Pago rechazado     | Pruebas de error               |
+| tok_3ds                 | Requiere 3D Secure | Pruebas de autenticación       |
+| tok_pending             | Pago pendiente     | Pruebas de estados intermedios |
+
+> No usar claves reales de Stripe. Para pruebas, define variables de entorno:
+> STRIPE_SECRET_KEY y STRIPE_PUBLIC_KEY con valores de prueba.
+
+</details>
+
+<details>
+<summary>Ejemplos de Requests</summary>
+
+### Suscribirse a Premium
+
+```http
 POST /api/suscripciones/suscribir
 Headers:
-  X-Usuario-Id: usuario_nuevo_001
+  X-Usuario-Id: usuario_001
   Authorization: Basic YWRtaW46YWRtaW4xMjM=
   Content-Type: application/json
 
@@ -181,18 +108,11 @@ Body:
   "tipoPago": "TARJETA_CREDITO",
   "tokenTarjetaPrueba": "tok_visa"
 }
+```
 
-Response (200 OK):
-{
-  "exito": true,
-  "mensaje": "Suscripción premium creada. Proceda con el pago.",
-  "idSuscripcion": "sub_1733550000123",
-  "plan": "premium",
-  "estado": "PENDIENTE_PAGO",
-  "requierePago": true
-}
+### Procesar pago manual
 
-Procesar pago manual
+```http
 POST /api/pagos/procesar
 Headers:
   X-Usuario-Id: usuario_001
@@ -206,66 +126,34 @@ Body:
   "tipoPago": "TARJETA_CREDITO",
   "tokenTarjetaPrueba": "tok_visa"
 }
+```
 
-Response (200 OK):
-{
-  "exito": true,
-  "mensaje": "Pago procesado exitosamente",
-  "idPago": "pago_123456789",
-  "estado": "COMPLETADO",
-  "monto": 29900.00,
-  "moneda": "COP"
-}
+</details>
 
-Cancelar suscripción
-POST /api/suscripciones/cancelar/sub_001
-Headers:
-  X-Usuario-Id: usuario_001
-  Authorization: Basic YWRtaW46YWRtaW4xMjM=
+<details>
+<summary>Primeros pasos</summary>
 
-Response (200 OK):
-{
-  "exito": true,
-  "mensaje": "Suscripción cancelada exitosamente",
-  "idSuscripcion": "sub_001",
-  "plan": "premium",
-  "estado": "CANCELADA"
-}
+1. Verificar que la aplicación esté corriendo:
 
-Tokens de Prueba Stripe
-Token	Comportamiento	Uso recomendado
-tok_visa	Pago exitoso	Flujos normales
-tok_visa_chargeDeclined	Pago rechazado	Pruebas de error
-tok_3ds	Requiere 3D Secure	Pruebas de autenticación
-tok_pending	Pago pendiente	Pruebas de estados intermedios
-Logs de la Aplicación
-
-Mensajes de inicio:
-
-Datos mock inicializados: 2 planes, 2 suscripciones
-Datos de pago mock inicializados
-Zabora Subscription Service iniciado en puerto 8080
-Swagger UI disponible en: http://localhost:8080/swagger-ui.html
-H2 Console disponible en: http://localhost:8080/h2-console
-
-
-Errores comunes y soluciones:
-
-Error	Causa probable	Solución
-401 Unauthorized	Header Authorization vacío o incorrecto	Usar Basic YWRtaW46YWRtaW4xMjM=
-400 Bad Request	Falta header X-Usuario-Id	Agregar X-Usuario-Id: [id_usuario]
-400 Bad Request	Usuario ya tiene suscripción activa	Usar nuevo usuario_test_XXX
-500 Internal Server Error	Suscripción no encontrada	Verificar combinación usuario/suscripción
-Primeros pasos para debugging
-
-Verificar que la aplicación esté corriendo:
-
+```bash
 curl http://localhost:8080/api/suscripciones/datos-mock
+```
 
+2. Probar autenticación básica:
 
-Probar autenticación básica:
-
+```bash
 curl -u admin:admin123 http://localhost:8080/api/suscripciones/estado -H "X-Usuario-Id: usuario_001"
+```
 
+3. Revisar logs para mensajes de error detallados.
 
-Revisar logs de la aplicación para mensajes de error detallados.
+</details>
+
+<details>
+<summary>Recursos adicionales</summary>
+
+* Swagger UI: `http://localhost:8080/swagger-ui.html`
+* H2 Console: `http://localhost:8080/h2-console`
+
+</details>
+
