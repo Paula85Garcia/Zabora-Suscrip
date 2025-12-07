@@ -1,6 +1,6 @@
 # Zabora Subscription Service - Entorno de Pruebas
 
-![Java](https://img.shields.io/badge/Java-17-blue) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green) ![H2 Database](https://img.shields.io/badge/H2-Database-lightgrey) ![License](https://img.shields.io/badge/License-MIT-yellow)
+![Java](https://img.shields.io/badge/Java-17-blue) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green) ![H2 Database](https://img.shields.io/badge/H2-Database-lightgrey) ![License]
 
 Microservicio de suscripciones para la plataforma Zabora, orientado solo a pruebas: datos mock, pagos simulados y autenticación básica.
 
@@ -152,7 +152,6 @@ curl -u admin:admin123 http://localhost:8080/api/suscripciones/estado -H "X-Usua
 <summary>Recursos adicionales</summary>
 
 * Swagger UI: `http://localhost:8080/swagger-ui.html`
-* H2 Console: `http://localhost:8080/h2-console`
 
 </details>
 
