@@ -27,3 +27,7 @@ Thumbs.db
 .env
 application-local.properties
 application-prod.properties
+<<<<<<< HEAD
+=======
+
+>>>>>>> 39a41a3 (Agregado .gitignore, limpiados archivos privados y ajustes de proyecto)
