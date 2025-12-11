@@ -44,6 +44,13 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         
+        <dependency>
+    <groupId>io.github.cdimascio</groupId>
+    <artifactId>dotenv-spring-boot</artifactId>
+    </dependency>
+        
+       
+        
         <!-- ========== BASE DE DATOS ========== -->
         <dependency>
             <groupId>com.mysql</groupId>

@@ -1,10 +1,10 @@
 CREATE DATABASE zabora_subscriptions CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE zabora_subscriptions;
 
---------------------------------------------------------------------------------
+
 -- TABLA: PLANES DE SUSCRIPCIÓN
 -- Almacena los planes disponibles (gratuito, premium) con sus límites y precios.
---------------------------------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS planes_suscripcion (
     id INT PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(50) NOT NULL UNIQUE,
@@ -22,16 +22,13 @@ CREATE TABLE IF NOT EXISTS planes_suscripcion (
     -- Control
     activo BOOLEAN DEFAULT TRUE,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    INDEX idx_plan_nombre (nombre),
-    INDEX idx_plan_activo (activo)
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---------------------------------------------------------------------------------
+
 -- TABLA: SUSCRIPCIONES DE USUARIOS
 -- Almacena la relación entre usuarios y planes, con estado y periodos.
---------------------------------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS suscripciones_usuarios (
     id VARCHAR(36) PRIMARY KEY,
     usuario_id VARCHAR(36) NOT NULL,
@@ -52,19 +49,15 @@ CREATE TABLE IF NOT EXISTS suscripciones_usuarios (
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    INDEX idx_usuario_id (usuario_id),
-    INDEX idx_estado (estado),
-    INDEX idx_fin_periodo (fin_periodo_actual),
-
     FOREIGN KEY (plan_id)
         REFERENCES planes_suscripcion(id)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---------------------------------------------------------------------------------
+
 -- TABLA: MÉTODOS DE PAGO
 -- Guarda los métodos de pago de un usuario (tarjeta o PSE).
---------------------------------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS metodos_pago (
     id VARCHAR(36) PRIMARY KEY,
     usuario_id VARCHAR(36) NOT NULL,
@@ -87,21 +80,13 @@ CREATE TABLE IF NOT EXISTS metodos_pago (
     predeterminado BOOLEAN DEFAULT FALSE,
     activo BOOLEAN DEFAULT TRUE,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    INDEX idx_usuario_id (usuario_id),
-    INDEX idx_tipo (tipo),
-    INDEX idx_predeterminado (predeterminado),
-    INDEX idx_activo (activo),
-
-    UNIQUE INDEX idx_usuario_predeterminado (usuario_id, predeterminado)
-        WHERE predeterminado = TRUE
+    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---------------------------------------------------------------------------------
+
 -- TABLA: PAGOS
 -- Guarda todos los pagos realizados por los usuarios.
---------------------------------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS pagos (
     id VARCHAR(36) PRIMARY KEY,
     suscripcion_id VARCHAR(36) NOT NULL,
@@ -128,21 +113,15 @@ CREATE TABLE IF NOT EXISTS pagos (
 
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    INDEX idx_usuario_id (usuario_id),
-    INDEX idx_suscripcion_id (suscripcion_id),
-    INDEX idx_estado (estado),
-    INDEX idx_fecha_pago (fecha_pago),
-    INDEX idx_intento_stripe (id_intento_pago_stripe),
-
     FOREIGN KEY (suscripcion_id)
         REFERENCES suscripciones_usuarios(id)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---------------------------------------------------------------------------------
+
 -- TABLA AUXILIAR: SECUENCIA DE FACTURAS
 -- Controla el consecutivo de facturación sin violar claves foráneas.
---------------------------------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS secuencia_facturas (
     id INT PRIMARY KEY DEFAULT 1,
     consecutivo BIGINT NOT NULL DEFAULT 1000
@@ -151,10 +130,10 @@ CREATE TABLE IF NOT EXISTS secuencia_facturas (
 INSERT IGNORE INTO secuencia_facturas (id, consecutivo)
 VALUES (1, 1000);
 
---------------------------------------------------------------------------------
+
 -- TABLA: FACTURAS DIAN
 -- Almacena las facturas generadas a partir de pagos completados.
---------------------------------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS facturas (
     id VARCHAR(36) PRIMARY KEY,
     pago_id VARCHAR(36) NOT NULL,
@@ -182,21 +161,17 @@ CREATE TABLE IF NOT EXISTS facturas (
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    UNIQUE INDEX idx_numero_factura (numero_factura),
-    INDEX idx_usuario_id (usuario_id),
-    INDEX idx_fecha_emision (fecha_emision),
-    INDEX idx_estado_factura (estado),
-    INDEX idx_cufe (cufe),
+    UNIQUE (numero_factura),
 
     FOREIGN KEY (pago_id)
         REFERENCES pagos(id)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---------------------------------------------------------------------------------
+
 -- TABLA: LOGS DE SUSCRIPCIONES
 -- Registra cambios, acciones y auditoría en suscripciones.
---------------------------------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS logs_suscripciones (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     suscripcion_id VARCHAR(36) NOT NULL,
@@ -225,20 +200,15 @@ CREATE TABLE IF NOT EXISTS logs_suscripciones (
 
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    INDEX idx_suscripcion_id (suscripcion_id),
-    INDEX idx_usuario_id (usuario_id),
-    INDEX idx_accion (accion),
-    INDEX idx_fecha_creacion (fecha_creacion),
-
     FOREIGN KEY (suscripcion_id)
         REFERENCES suscripciones_usuarios(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---------------------------------------------------------------------------------
+
 -- TABLA: REPORTES DE INGRESOS
 -- Guarda reportes generados para administración.
---------------------------------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS reportes_ingresos (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
 
@@ -262,15 +232,12 @@ CREATE TABLE IF NOT EXISTS reportes_ingresos (
     pdf_url VARCHAR(500) NULL,
 
     generado_por VARCHAR(36) NULL,
-    fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    INDEX idx_fechas (fecha_inicio, fecha_fin),
-    INDEX idx_tipo_reporte (tipo_reporte)
+    fecha_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---------------------------------------------------------------------------------
+
 -- DATOS INICIALES
---------------------------------------------------------------------------------
+
 INSERT INTO planes_suscripcion 
     (nombre, descripcion, precio, moneda,
      limite_condiciones_medicas, limite_alergias,
@@ -283,9 +250,9 @@ VALUES
     ('premium', 'Plan premium con todas las características', 29900.00, 'COP',
      3, 4, 1, 20, NULL, TRUE);
 
---------------------------------------------------------------------------------
+
 -- VISTA: SUSCRIPCIONES ACTIVAS
---------------------------------------------------------------------------------
+
 CREATE OR REPLACE VIEW vista_suscripciones_activas AS
 SELECT 
     su.id AS suscripcion_id,
@@ -306,9 +273,9 @@ JOIN planes_suscripcion ps ON su.plan_id = ps.id
 WHERE su.estado = 'ACTIVA'
   AND (su.fin_periodo_actual IS NULL OR su.fin_periodo_actual > NOW());
 
---------------------------------------------------------------------------------
+
 -- VISTA: INGRESOS MENSUALES
---------------------------------------------------------------------------------
+
 CREATE OR REPLACE VIEW vista_ingresos_mensuales AS
 SELECT 
     DATE_FORMAT(p.fecha_pago, '%Y-%m') AS mes,
@@ -322,9 +289,9 @@ WHERE p.estado = 'COMPLETADO'
 GROUP BY DATE_FORMAT(p.fecha_pago, '%Y-%m')
 ORDER BY mes DESC;
 
---------------------------------------------------------------------------------
+
 -- PROCEDIMIENTO: CANCELAR UNA SUSCRIPCIÓN
---------------------------------------------------------------------------------
+
 DELIMITER $$
 CREATE PROCEDURE sp_cancelar_suscripcion(
     IN p_suscripcion_id VARCHAR(36),
@@ -377,10 +344,10 @@ BEGIN
 END$$
 DELIMITER ;
 
---------------------------------------------------------------------------------
+
 -- PROCEDIMIENTO: GENERAR FACTURA
 -- Usa secuencia_facturas para el consecutivo.
---------------------------------------------------------------------------------
+
 DELIMITER $$
 CREATE PROCEDURE sp_generar_factura(
     IN p_pago_id VARCHAR(36)
@@ -430,9 +397,9 @@ BEGIN
 END$$
 DELIMITER ;
 
---------------------------------------------------------------------------------
+
 -- TRIGGER: REGISTRO DE CAMBIOS DE ESTADO EN SUSCRIPCIONES
---------------------------------------------------------------------------------
+
 DELIMITER $$
 CREATE TRIGGER trg_log_cambio_suscripcion
 AFTER UPDATE ON suscripciones_usuarios
@@ -447,9 +414,9 @@ BEGIN
 END$$
 DELIMITER ;
 
---------------------------------------------------------------------------------
+
 -- TRIGGER: ACTUALIZAR FECHA DE PAGO CUANDO EL ESTADO CAMBIA A COMPLETADO
---------------------------------------------------------------------------------
+
 DELIMITER $$
 CREATE TRIGGER trg_actualizar_fecha_pago
 BEFORE UPDATE ON pagos
@@ -461,14 +428,5 @@ BEGIN
 END$$
 DELIMITER ;
 
-
--- ÍNDICES ADICIONALES PARA OPTIMIZACIÓN
-CREATE INDEX idx_pagos_fecha_estado ON pagos (fecha_pago, estado);
-CREATE INDEX idx_suscripciones_usuario_estado ON suscripciones_usuarios (usuario_id, estado);
-CREATE INDEX idx_metodos_pago_usuario_activo ON metodos_pago (usuario_id, activo, predeterminado);
-CREATE INDEX idx_facturas_pago_usuario ON facturas (pago_id, usuario_id);
-
-
 -- CONFIRMACIÓN
-
 SELECT 'Base de datos Zabora Subscriptions creada correctamente' AS mensaje;

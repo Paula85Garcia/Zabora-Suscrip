@@ -1,121 +1,87 @@
 package com.zabora.subscription.servicio;
 
+import com.zabora.subscription.excepcion.RecursoNoEncontradoException;
+import com.zabora.subscription.excepcion.SuscripcionException;
 import com.zabora.subscription.modelo.dto.RespuestaSuscripcionDTO;
 import com.zabora.subscription.modelo.dto.RespuestaVerificacionDTO;
 import com.zabora.subscription.modelo.dto.SolicitudSuscripcionDTO;
+import com.zabora.subscription.modelo.entidad.LogSuscripcion;
 import com.zabora.subscription.modelo.entidad.PlanSuscripcion;
 import com.zabora.subscription.modelo.entidad.UsuarioSuscripcion;
+import com.zabora.subscription.modelo.enumeracion.AccionLog;
 import com.zabora.subscription.modelo.enumeracion.EstadoSuscripcion;
-import com.zabora.subscription.modelo.enumeracion.TipoMetodoPago;
+import com.zabora.subscription.repositorio.LogSuscripcionRepository;
+import com.zabora.subscription.repositorio.PlanSuscripcionRepository;
+import com.zabora.subscription.repositorio.UsuarioSuscripcionRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class SuscripcionServicio {
     
-    // DATOS QUEMADOS PARA PRUEBAS
-    private final List<PlanSuscripcion> planesMock;
-    private final List<UsuarioSuscripcion> suscripcionesMock;
-    private final Map<String, List<Map<String, Object>>> pagosMock;
+    private final UsuarioSuscripcionRepository suscripcionRepository;
+    private final PlanSuscripcionRepository planRepository;
+    private final LogSuscripcionRepository logRepository;
     
-    public SuscripcionServicio() {
-        this.planesMock = new ArrayList<>();
-        this.suscripcionesMock = new ArrayList<>();
-        this.pagosMock = new HashMap<>();
-        inicializarDatosMock();
-    }
-    
-    private void inicializarDatosMock() {
-        // Crear planes mock
-        PlanSuscripcion planGratuito = new PlanSuscripcion(
-            1L, "gratuito", "Plan gratuito con características básicas", 
-            BigDecimal.ZERO, 2, 2, 1, 7, 4
-        );
-        
-        PlanSuscripcion planPremium = new PlanSuscripcion(
-            2L, "premium", "Plan premium con todas las características", 
-            new BigDecimal("29900.00"), 3, 4, 1, 20, null
-        );
-        
-        planesMock.add(planGratuito);
-        planesMock.add(planPremium);
-        
-        // Crear suscripciones mock
-        UsuarioSuscripcion suscripcionPremium = new UsuarioSuscripcion();
-        suscripcionPremium.setId("sub_001");
-        suscripcionPremium.setUsuarioId("usuario_001");
-        suscripcionPremium.setPlan(planPremium);
-        suscripcionPremium.setEstado(EstadoSuscripcion.ACTIVA);
-        suscripcionPremium.setInicioPeriodoActual(LocalDateTime.now().minusDays(10));
-        suscripcionPremium.setFinPeriodoActual(LocalDateTime.now().plusDays(20));
-        
-        UsuarioSuscripcion suscripcionGratuita = new UsuarioSuscripcion();
-        suscripcionGratuita.setId("sub_002");
-        suscripcionGratuita.setUsuarioId("usuario_002");
-        suscripcionGratuita.setPlan(planGratuito);
-        suscripcionGratuita.setEstado(EstadoSuscripcion.ACTIVA);
-        
-        suscripcionesMock.add(suscripcionPremium);
-        suscripcionesMock.add(suscripcionGratuita);
-        
-        // Crear pagos mock
-        List<Map<String, Object>> pagosUsuario1 = new ArrayList<>();
-        Map<String, Object> pago1 = new HashMap<>();
-        pago1.put("id", "pago_001");
-        pago1.put("idSuscripcion", "sub_001");
-        pago1.put("monto", new BigDecimal("29900.00"));
-        pago1.put("metodoPago", TipoMetodoPago.TARJETA_CREDITO);
-        pago1.put("estado", "COMPLETADO");
-        pago1.put("fecha", LocalDateTime.now().minusDays(10));
-        pago1.put("urlComprobante", "https://receipt.stripe.com/test/123");
-        pagosUsuario1.add(pago1);
-        pagosMock.put("usuario_001", pagosUsuario1);
-        
-        log.info("✅ Datos mock inicializados: {} planes, {} suscripciones", 
-                planesMock.size(), suscripcionesMock.size());
-    }
-    
+    /**
+     * EXPLICACIÓN :
+     * Este método es cuando   quieres comprar una membresía.
+     * 1. Verificas que el plan existe (premium o gratuito)
+     * 2. Verificas que no tengas ya una membresía activa
+     * 3. Si es gratuita, la tendras de inmediato
+     * 4. Si es premium, te crea la suscripción pero tienes que pagar primero
+     */
+    @Transactional
     public RespuestaSuscripcionDTO suscribirse(String usuarioId, SolicitudSuscripcionDTO solicitud) {
-        log.info("👤 Usuario {} suscribiéndose al plan {}", usuarioId, solicitud.getNombrePlan());
+        log.info("Usuario {} suscribiéndose al plan {}", usuarioId, solicitud.getNombrePlan());
         
-        // Buscar plan
-        PlanSuscripcion plan = planesMock.stream()
-            .filter(p -> p.getNombre().equalsIgnoreCase(solicitud.getNombrePlan()))
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("Plan no encontrado: " + solicitud.getNombrePlan()));
+        // 1. Buscar el plan en la base de datos
+        PlanSuscripcion plan = planRepository.findByNombre(solicitud.getNombrePlan())
+            .orElseThrow(() -> new RecursoNoEncontradoException(
+                "Plan no encontrado: " + solicitud.getNombrePlan()));
         
-        // Verificar si ya tiene suscripción activa
-        Optional<UsuarioSuscripcion> suscripcionExistente = suscripcionesMock.stream()
-            .filter(s -> s.getUsuarioId().equals(usuarioId) && 
-                        s.getEstado() == EstadoSuscripcion.ACTIVA)
-            .findFirst();
+        // 2. Verificar si ya tiene suscripción activa
+        Optional<UsuarioSuscripcion> suscripcionExistente = 
+            suscripcionRepository.findByUsuarioIdAndEstado(usuarioId, EstadoSuscripcion.ACTIVA);
         
         if (suscripcionExistente.isPresent()) {
-            throw new RuntimeException("El usuario ya tiene una suscripción activa");
+            throw new SuscripcionException("El usuario ya tiene una suscripción activa");
         }
         
-        // Crear nueva suscripción
+        // 3. Crear nueva suscripción
         UsuarioSuscripcion nuevaSuscripcion = new UsuarioSuscripcion();
-        String suscripcionId = "sub_" + System.currentTimeMillis();
-        nuevaSuscripcion.setId(suscripcionId);
+        nuevaSuscripcion.setId(UUID.randomUUID().toString());
         nuevaSuscripcion.setUsuarioId(usuarioId);
         nuevaSuscripcion.setPlan(plan);
         
-        // Si es gratuito, activar inmediatamente
+        // 4. Si es plan gratuito, activar inmediatamente
         if ("gratuito".equalsIgnoreCase(solicitud.getNombrePlan())) {
             nuevaSuscripcion.setEstado(EstadoSuscripcion.ACTIVA);
             nuevaSuscripcion.setInicioPeriodoActual(LocalDateTime.now());
-            suscripcionesMock.add(nuevaSuscripcion);
+            // Plan gratuito no expira
+            nuevaSuscripcion.setFinPeriodoActual(null);
+            
+            // Guardar en base de datos
+            suscripcionRepository.save(nuevaSuscripcion);
+            
+            // Registrar log
+            registrarLog(nuevaSuscripcion.getId(), usuarioId, AccionLog.CREACION, 
+                null, EstadoSuscripcion.ACTIVA.name(), 
+                "Suscripción gratuita creada", usuarioId);
+            
+            log.info(" Suscripción gratuita creada: {}", nuevaSuscripcion.getId());
             
             return RespuestaSuscripcionDTO.builder()
                 .exito(true)
                 .mensaje("Suscripción gratuita activada exitosamente")
-                .idSuscripcion(suscripcionId)
+                .idSuscripcion(nuevaSuscripcion.getId())
                 .plan(plan.getNombre())
                 .estado(EstadoSuscripcion.ACTIVA.name())
                 .limites(obtenerLimitesPlan(plan))
@@ -123,15 +89,21 @@ public class SuscripcionServicio {
                 .build();
         }
         
-        // Si es premium, crear pendiente de pago
+        // 5. Si es premium, crear pendiente de pago
         nuevaSuscripcion.setEstado(EstadoSuscripcion.PENDIENTE_PAGO);
-        suscripcionesMock.add(nuevaSuscripcion);
+        suscripcionRepository.save(nuevaSuscripcion);
         
-        // Simular creación de PaymentIntent
+        // Registrar log
+        registrarLog(nuevaSuscripcion.getId(), usuarioId, AccionLog.CREACION,
+            null, EstadoSuscripcion.PENDIENTE_PAGO.name(),
+            "Suscripción premium creada, pendiente de pago", usuarioId);
+        
+        log.info("💳 Suscripción premium creada, pendiente de pago: {}", nuevaSuscripcion.getId());
+        
+        // Simular PaymentIntent (en producción esto vendría de Stripe real)
         Map<String, Object> paymentIntent = new HashMap<>();
-        String intentId = "pi_" + System.currentTimeMillis();
-        paymentIntent.put("id", intentId);
-        paymentIntent.put("cliente_secreto", "secret_" + System.currentTimeMillis());
+        paymentIntent.put("id", "pi_" + System.currentTimeMillis());
+        paymentIntent.put("cliente_secreto", "secret_" + UUID.randomUUID());
         paymentIntent.put("monto", plan.getPrecio());
         paymentIntent.put("moneda", plan.getMoneda());
         paymentIntent.put("estado", "REQUIERE_METODO_PAGO");
@@ -139,7 +111,7 @@ public class SuscripcionServicio {
         return RespuestaSuscripcionDTO.builder()
             .exito(true)
             .mensaje("Suscripción premium creada. Proceda con el pago.")
-            .idSuscripcion(suscripcionId)
+            .idSuscripcion(nuevaSuscripcion.getId())
             .plan(plan.getNombre())
             .estado(EstadoSuscripcion.PENDIENTE_PAGO.name())
             .limites(obtenerLimitesPlan(plan))
@@ -148,25 +120,59 @@ public class SuscripcionServicio {
             .build();
     }
     
+    /**
+     * EXPLICACIÓN :
+     * Es como cancelar tu suscripción de Netflix.
+     * 1. Verificas que la suscripción existe
+     * 2. La cancelas
+     * 3. Si cancelaste en las primeras 24 horas, puedes pedir reembolso
+     */
+    @Transactional
     public RespuestaSuscripcionDTO cancelarSuscripcion(String usuarioId, String idSuscripcion) {
-        log.info("❌ Usuario {} cancelando suscripción {}", usuarioId, idSuscripcion);
+        log.info("Usuario {} cancelando suscripción {}", usuarioId, idSuscripcion);
         
-        UsuarioSuscripcion suscripcion = suscripcionesMock.stream()
-            .filter(s -> s.getId().equals(idSuscripcion) && s.getUsuarioId().equals(usuarioId))
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("Suscripción no encontrada"));
+        // 1. Buscar la suscripción
+        UsuarioSuscripcion suscripcion = suscripcionRepository.findById(idSuscripcion)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Suscripción no encontrada"));
         
-        if (suscripcion.getEstado() == EstadoSuscripcion.CANCELADA) {
-            throw new RuntimeException("La suscripción ya está cancelada");
+        // 2. Verificar que pertenece al usuario
+        if (!suscripcion.getUsuarioId().equals(usuarioId)) {
+            throw new SuscripcionException("No tienes permiso para cancelar esta suscripción");
         }
         
-        // Marcar como cancelada
+        // 3. Verificar que no esté ya cancelada
+        if (suscripcion.getEstado() == EstadoSuscripcion.CANCELADA) {
+            throw new SuscripcionException("La suscripción ya está cancelada");
+        }
+        
+        // 4. Guardar estado anterior para el log
+        EstadoSuscripcion estadoAnterior = suscripcion.getEstado();
+        
+        // 5. Cancelar suscripción
         suscripcion.setEstado(EstadoSuscripcion.CANCELADA);
         suscripcion.setFechaCancelacion(LocalDateTime.now());
-        suscripcion.setFechaActualizacion(LocalDateTime.now());
+        suscripcion.setCancelarAlFinalPeriodo(true);
         
-        // Verificar si es elegible para reembolso (primeras 24 horas)
+        suscripcionRepository.save(suscripcion);
+        
+        // 6. Verificar elegibilidad para reembolso (primeras 24 horas)
         boolean elegibleReembolso = esElegibleParaReembolso(suscripcion.getFechaCreacion());
+        
+        // 7. Registrar log
+        String descripcionLog = elegibleReembolso 
+            ? "Suscripción cancelada - Elegible para reembolso"
+            : "Suscripción cancelada";
+            
+        registrarLog(idSuscripcion, usuarioId, AccionLog.CANCELACION,
+            estadoAnterior.name(), EstadoSuscripcion.CANCELADA.name(),
+            descripcionLog, usuarioId);
+        
+        if (elegibleReembolso) {
+            registrarLog(idSuscripcion, usuarioId, AccionLog.REEMBOLSO,
+                null, null, "Reembolso automático por cancelación en 24 horas", "sistema");
+        }
+        
+        log.info("Suscripción cancelada exitosamente: {}", idSuscripcion);
         
         return RespuestaSuscripcionDTO.builder()
             .exito(true)
@@ -179,15 +185,25 @@ public class SuscripcionServicio {
             .build();
     }
     
+    /**
+     * EXPLICACIÓN:
+     * Es como cuando otros servicios (Recipe Service) preguntan:
+     * "¿Este usuario tiene premium activo?"
+     * Este método responde rápido para que puedan tomar decisiones.
+     */
+    @Transactional(readOnly = true)
     public RespuestaVerificacionDTO verificarSuscripcion(String usuarioId) {
-        Optional<UsuarioSuscripcion> suscripcionOpt = suscripcionesMock.stream()
-            .filter(s -> s.getUsuarioId().equals(usuarioId) && 
-                        s.getEstado() == EstadoSuscripcion.ACTIVA)
-            .findFirst();
+        log.debug("🔍 Verificando suscripción para usuario: {}", usuarioId);
+        
+        // Buscar suscripción activa
+        Optional<UsuarioSuscripcion> suscripcionOpt = 
+            suscripcionRepository.findByUsuarioIdAndEstado(usuarioId, EstadoSuscripcion.ACTIVA);
         
         if (suscripcionOpt.isEmpty()) {
-            // Usuario sin suscripción activa - devolver límites gratuitos
-            PlanSuscripcion planGratuito = planesMock.get(0);
+            // No tiene suscripción activa - devolver límites gratuitos
+            PlanSuscripcion planGratuito = planRepository.findByNombre("gratuito")
+                .orElseThrow(() -> new RecursoNoEncontradoException("Plan gratuito no encontrado"));
+            
             return RespuestaVerificacionDTO.builder()
                 .valida(false)
                 .plan("gratuito")
@@ -197,6 +213,31 @@ public class SuscripcionServicio {
         }
         
         UsuarioSuscripcion suscripcion = suscripcionOpt.get();
+        
+        // Verificar si está expirada (solo para premium)
+        if (suscripcion.getFinPeriodoActual() != null && 
+            suscripcion.getFinPeriodoActual().isBefore(LocalDateTime.now())) {
+            
+            // Marcar como expirada
+            suscripcion.setEstado(EstadoSuscripcion.EXPIRADA);
+            suscripcionRepository.save(suscripcion);
+            
+            registrarLog(suscripcion.getId(), usuarioId, AccionLog.CAMBIO_ESTADO,
+                EstadoSuscripcion.ACTIVA.name(), EstadoSuscripcion.EXPIRADA.name(),
+                "Suscripción expirada automáticamente", "sistema");
+            
+            PlanSuscripcion planGratuito = planRepository.findByNombre("gratuito")
+                .orElseThrow(() -> new RecursoNoEncontradoException("Plan gratuito no encontrado"));
+            
+            return RespuestaVerificacionDTO.builder()
+                .valida(false)
+                .plan("gratuito")
+                .estado("EXPIRADA")
+                .limites(obtenerLimitesPlan(planGratuito))
+                .build();
+        }
+        
+        // Suscripción activa y válida
         boolean esPremium = "premium".equalsIgnoreCase(suscripcion.getPlan().getNombre());
         
         return RespuestaVerificacionDTO.builder()
@@ -208,38 +249,101 @@ public class SuscripcionServicio {
             .build();
     }
     
+    /**
+     * EXPLICACIÓN:
+     * Muestra toda la información de la suscripción del usuario,
+     * como si miraras tu perfil de Netflix.
+     */
+    @Transactional(readOnly = true)
     public Map<String, Object> obtenerEstadoSuscripcion(String usuarioId) {
         Map<String, Object> respuesta = new HashMap<>();
         
-        Optional<UsuarioSuscripcion> suscripcionOpt = suscripcionesMock.stream()
-            .filter(s -> s.getUsuarioId().equals(usuarioId))
-            .findFirst();
+        List<UsuarioSuscripcion> suscripciones = suscripcionRepository.findByUsuarioId(usuarioId);
         
-        if (suscripcionOpt.isPresent()) {
-            UsuarioSuscripcion suscripcion = suscripcionOpt.get();
+        if (suscripciones.isEmpty()) {
+            // Usuario sin suscripciones
+            PlanSuscripcion planGratuito = planRepository.findByNombre("gratuito")
+                .orElseThrow(() -> new RecursoNoEncontradoException("Plan gratuito no encontrado"));
             
             respuesta.put("usuario_id", usuarioId);
-            respuesta.put("suscripcion", suscripcion);
-            respuesta.put("plan", suscripcion.getPlan());
-            respuesta.put("limites", obtenerLimitesPlan(suscripcion.getPlan()));
-            respuesta.put("es_premium", "premium".equalsIgnoreCase(suscripcion.getPlan().getNombre()) && 
-                          suscripcion.getEstado() == EstadoSuscripcion.ACTIVA);
-            
-            // Agregar historial de pagos si existe
-            if (pagosMock.containsKey(usuarioId)) {
-                respuesta.put("historial_pagos", pagosMock.get(usuarioId));
-            }
-        } else {
-            PlanSuscripcion planGratuito = planesMock.get(0);
-            respuesta.put("usuario_id", usuarioId);
-            respuesta.put("suscripcion", null);
-            respuesta.put("plan", planGratuito);
+            respuesta.put("tiene_suscripcion", false);
+            respuesta.put("plan_actual", planGratuito);
             respuesta.put("limites", obtenerLimitesPlan(planGratuito));
             respuesta.put("es_premium", false);
+            
+            return respuesta;
+        }
+        
+        // Obtener suscripción activa (si existe)
+        Optional<UsuarioSuscripcion> suscripcionActiva = suscripciones.stream()
+            .filter(s -> s.getEstado() == EstadoSuscripcion.ACTIVA)
+            .findFirst();
+        
+        if (suscripcionActiva.isPresent()) {
+            UsuarioSuscripcion suscripcion = suscripcionActiva.get();
+            
+            respuesta.put("usuario_id", usuarioId);
+            respuesta.put("tiene_suscripcion", true);
+            respuesta.put("suscripcion_id", suscripcion.getId());
+            respuesta.put("plan_actual", suscripcion.getPlan());
+            respuesta.put("estado", suscripcion.getEstado().name());
+            respuesta.put("inicio_periodo", suscripcion.getInicioPeriodoActual());
+            respuesta.put("fin_periodo", suscripcion.getFinPeriodoActual());
+            respuesta.put("limites", obtenerLimitesPlan(suscripcion.getPlan()));
+            respuesta.put("es_premium", "premium".equalsIgnoreCase(suscripcion.getPlan().getNombre()));
+            
+        } else {
+            // Tiene suscripciones pero ninguna activa
+            PlanSuscripcion planGratuito = planRepository.findByNombre("gratuito")
+                .orElseThrow(() -> new RecursoNoEncontradoException("Plan gratuito no encontrado"));
+            
+            respuesta.put("usuario_id", usuarioId);
+            respuesta.put("tiene_suscripcion", false);
+            respuesta.put("plan_actual", planGratuito);
+            respuesta.put("limites", obtenerLimitesPlan(planGratuito));
+            respuesta.put("es_premium", false);
+            respuesta.put("historial_suscripciones", suscripciones);
         }
         
         return respuesta;
     }
+    
+    /**
+     *Obtener todos los planes disponibles
+     */
+    @Transactional(readOnly = true)
+    public List<PlanSuscripcion> obtenerPlanes() {
+        return planRepository.findByActivoTrue();
+    }
+    
+    /**
+     * Activar suscripción premium después del pago
+     * Este método es llamado por PagoServicio cuando el pago se completa
+     */
+    @Transactional
+    public void activarSuscripcionPremium(String suscripcionId, String stripeSubscriptionId) {
+        log.info("Activando suscripción premium: {}", suscripcionId);
+        
+        UsuarioSuscripcion suscripcion = suscripcionRepository.findById(suscripcionId)
+            .orElseThrow(() -> new RecursoNoEncontradoException("Suscripción no encontrada"));
+        
+        EstadoSuscripcion estadoAnterior = suscripcion.getEstado();
+        
+        suscripcion.setEstado(EstadoSuscripcion.ACTIVA);
+        suscripcion.setInicioPeriodoActual(LocalDateTime.now());
+        suscripcion.setFinPeriodoActual(LocalDateTime.now().plusMonths(1)); // 30 días
+        suscripcion.setIdSuscripcionStripe(stripeSubscriptionId);
+        
+        suscripcionRepository.save(suscripcion);
+        
+        registrarLog(suscripcionId, suscripcion.getUsuarioId(), AccionLog.ACTIVACION,
+            estadoAnterior.name(), EstadoSuscripcion.ACTIVA.name(),
+            "Suscripción premium activada tras pago exitoso", "sistema");
+        
+        log.info("Suscripción premium activada exitosamente: {}", suscripcionId);
+    }
+    
+    // ========== MÉTODOS AUXILIARES ==========
     
     private Map<String, Object> obtenerLimitesPlan(PlanSuscripcion plan) {
         Map<String, Object> limites = new HashMap<>();
@@ -255,28 +359,18 @@ public class SuscripcionServicio {
         return LocalDateTime.now().minusHours(24).isBefore(fechaCreacion);
     }
     
-    public Map<String, Object> obtenerDatosMock() {
-        Map<String, Object> datos = new HashMap<>();
+    private void registrarLog(String suscripcionId, String usuarioId, AccionLog accion,
+                            String estadoAnterior, String estadoNuevo, 
+                            String descripcion, String realizadoPor) {
+        LogSuscripcion log = new LogSuscripcion();
+        log.setSuscripcionId(suscripcionId);
+        log.setUsuarioId(usuarioId);
+        log.setAccion(accion);
+        log.setEstadoAnterior(estadoAnterior);
+        log.setEstadoNuevo(estadoNuevo);
+        log.setDescripcion(descripcion);
+        log.setRealizadoPor(realizadoPor);
         
-        datos.put("planes", planesMock);
-        datos.put("suscripciones", suscripcionesMock);
-        datos.put("pagos", pagosMock);
-        
-        Map<String, Object> estadisticas = new HashMap<>();
-        estadisticas.put("total_usuarios", 2);
-        estadisticas.put("premium_activos", 
-            suscripcionesMock.stream()
-                .filter(s -> "premium".equalsIgnoreCase(s.getPlan().getNombre()) && 
-                           s.getEstado() == EstadoSuscripcion.ACTIVA)
-                .count());
-        estadisticas.put("ingresos_totales", new BigDecimal("29900.00"));
-        
-        datos.put("estadisticas", estadisticas);
-        
-        return datos;
-    }
-    
-    public List<PlanSuscripcion> obtenerPlanes() {
-        return new ArrayList<>(planesMock);
+        logRepository.save(log);
     }
 }
