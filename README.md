@@ -25,7 +25,7 @@ Swagger UI available at '/swagger-ui.html'
 | API Base   | [http://localhost:8080/api](http://localhost:8080/api)                         |
 | Swagger UI | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) |
 | H2 Console | [http://localhost:8080/h2-console](http://localhost:8080/h2-console)           |
-
+| Authorizati|Basic YWRtaW46YWRtaW4xMj                                                        |
 ---
 
 # **4. Usuarios de Prueba**
