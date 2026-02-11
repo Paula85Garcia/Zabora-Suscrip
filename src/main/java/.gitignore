@@ -18,20 +18,11 @@ credentials/
 
 
 
-# Eclipse
 .project
 .classpath
 .settings/
 bin/
 
-# VS Code
-.vscode/
-
-# NetBeans
-nbproject/
-nbbuild/
-dist/
-nbdist/
 
 # ========== BUILD ==========
 target/
