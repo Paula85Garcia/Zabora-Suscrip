@@ -4,6 +4,9 @@ import com.zabora.subscription.modelo.enumeracion.EstadoPago;
 import com.zabora.subscription.modelo.enumeracion.TipoMetodoPago;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -26,7 +29,7 @@ public class Pago {
     @Column(name = "monto", nullable = false, precision = 10, scale = 2)
     private BigDecimal monto;
     
-    @Column(name = "moneda", length = 3, nullable = false)
+    @Column(name = "moneda", length = 3)
     private String moneda = "COP";
     
     @Enumerated(EnumType.STRING)
@@ -37,18 +40,34 @@ public class Pago {
     @Column(name = "estado", nullable = false)
     private EstadoPago estado = EstadoPago.PENDIENTE;
     
-    @Column(name = "id_intento_pago_stripe")
+    @Column(name = "id_intento_pago_stripe", nullable = false, length = 255, unique = true)
     private String idIntentoPagoStripe;
     
     @Column(name = "fecha_pago")
     private LocalDateTime fechaPago;
     
-    @Column(name = "url_comprobante")
+    @Column(name = "url_comprobante", length = 500)
     private String urlComprobante;
     
-    @Column(name = "metadatos", columnDefinition = "JSON")
+    @Column(name = "codigo_autorizacion", length = 50)
+    private String codigoAutorizacion;
+    
+    @Column(name = "estado_pse", length = 50)
+    private String estadoPse;
+    
+    @Column(name = "referencia_pse", length = 100)
+    private String referenciaPse;
+    
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadatos", columnDefinition = "LONGTEXT")
     private String metadatos;
     
     @Column(name = "fecha_creacion")
-    private LocalDateTime fechaCreacion = LocalDateTime.now();
+    private LocalDateTime fechaCreacion;
+    
+    // Constructor para inicializacion
+    public Pago() {
+        this.id = java.util.UUID.randomUUID().toString();
+        this.fechaCreacion = LocalDateTime.now();
+    }
 }

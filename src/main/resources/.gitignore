@@ -1,0 +1,129 @@
+# ========================================
+# .gitignore - Zabora Subscription Service
+# ========================================
+
+# ========== ARCHIVOS DE CONFIGURACIÓN SENSIBLES ==========
+# NUNCA subir archivos con credenciales reales
+src/main/resources/application.properties
+src/main/resources/application-local.properties
+src/main/resources/application-prod.properties
+.env
+.env.local
+.env.production
+.env.*.local
+
+# ========== SCRIPTS CON CREDENCIALES ==========
+start-dev.sh
+start-dev.bat
+run-local.sh
+run-local.bat
+
+# ========== CREDENCIALES Y SECRETOS ==========
+credentials.json
+secrets.json
+*.pem
+*.key
+*.crt
+config/secrets/
+
+# ========== MAVEN ==========
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ========== INTELLIJ IDEA ==========
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# ========== ECLIPSE ==========
+.classpath
+.project
+.settings/
+bin/
+.metadata
+.recommenders
+
+# ========== VSCODE ==========
+.vscode/
+*.code-workspace
+
+# ========== NETBEANS ==========
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# ========== LOGS ==========
+*.log
+logs/
+*.log.*
+log/
+
+# ========== TEMPORALES ==========
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ========== BASE DE DATOS ==========
+*.db
+*.sqlite
+*.sqlite3
+h2/
+data/
+
+# ========== BACKUP ==========
+*.bak
+*.backup
+backup/
+
+# ========== SISTEMA OPERATIVO ==========
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ========== NODE (para frontend si lo tienes en el mismo repo) ==========
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/
+dist/
+.angular/
+.cache/
+
+# ========== STRIPE ==========
+# Archivos de testing de Stripe
+stripe-events.log
+webhook-*.log
+
+# ========== OTROS ==========
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar

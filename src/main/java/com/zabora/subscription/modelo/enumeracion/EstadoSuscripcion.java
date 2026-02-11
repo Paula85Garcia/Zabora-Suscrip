@@ -4,5 +4,6 @@ public enum EstadoSuscripcion {
     ACTIVA,
     CANCELADA,
     EXPIRADA,
-    PENDIENTE_PAGO
+    PENDIENTE_PAGO,
+    SIN_SUSCRIPCION
 }

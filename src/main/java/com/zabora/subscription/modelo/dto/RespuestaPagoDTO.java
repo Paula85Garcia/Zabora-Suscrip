@@ -44,4 +44,8 @@ public class RespuestaPagoDTO {
     
     @Schema(description = "Detalles adicionales del pago")
     private Map<String, Object> detalles;
+
+    @Schema(description = "Indica si el usuario solicito recibir factura por email", 
+            example = "true")
+    private Boolean recibirFactura;
 }

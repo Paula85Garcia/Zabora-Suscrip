@@ -51,14 +51,13 @@
         </dependency>
         
         <!-- H2 Database para pruebas y desarrollo -->
-        <dependency>
+        <!--   <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
-        </dependency>
+        </dependency> -->
         
         <!-- ========== SEGURIDAD JWT ========== -->
-        <!-- JJWT para tokens JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -84,8 +83,7 @@
             <version>${stripe-java.version}</version>
         </dependency>
         
-        <!-- ========== DOCUMENTACIÓN API ========== -->
-        <!-- SpringDoc OpenAPI 3 - compatible con Spring Boot 3.1.5 -->
+        <!-- ========== DOCUMENTACION API ========== -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>

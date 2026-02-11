@@ -1,0 +1,73 @@
+# ========================================
+# ZABORA SUBSCRIPTION SERVICE - .gitignore
+# ========================================
+
+# ========== ARCHIVOS SENSIBLES ==========
+.env
+application.properties
+application-*.properties
+!application-example.properties
+start.sh
+
+# Claves y secretos
+*.key
+*.pem
+*.p12
+secrets/
+credentials/
+
+
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# NetBeans
+nbproject/
+nbbuild/
+dist/
+nbdist/
+
+# ========== BUILD ==========
+target/
+build/
+*.class
+*.jar
+*.war
+*.ear
+
+# ========== MAVEN ==========
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# ========== LOGS ==========
+*.log
+logs/
+spring.log
+
+# ========== TEMPORAL ==========
+*.tmp
+*.temp
+*.swp
+*.bak
+*~
+
+# ========== SISTEMA OPERATIVO ==========
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ========== BASES DE DATOS ==========
+*.db
+*.sqlite
+*.h2.db
+

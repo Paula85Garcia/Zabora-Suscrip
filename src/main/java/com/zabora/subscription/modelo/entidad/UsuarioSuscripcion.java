@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 public class UsuarioSuscripcion {
     
     @Id
-    @Column(name = "id", length = 36)
+    @Column(name = "id", length = 100)
     private String id;
     
-    @Column(name = "usuario_id", nullable = false, length = 36)
+    @Column(name = "usuario_id", nullable = false, length = 100)
     private String usuarioId;
     
     @ManyToOne(fetch = FetchType.EAGER)
@@ -37,15 +37,22 @@ public class UsuarioSuscripcion {
     @Column(name = "fecha_cancelacion")
     private LocalDateTime fechaCancelacion;
     
-    @Column(name = "id_cliente_stripe")
+    @Column(name = "id_cliente_stripe", length = 255)
     private String idClienteStripe;
     
-    @Column(name = "id_suscripcion_stripe")
+    @Column(name = "id_suscripcion_stripe", length = 255)
     private String idSuscripcionStripe;
     
     @Column(name = "fecha_creacion")
-    private LocalDateTime fechaCreacion = LocalDateTime.now();
+    private LocalDateTime fechaCreacion;
     
     @Column(name = "fecha_actualizacion")
-    private LocalDateTime fechaActualizacion = LocalDateTime.now();
+    private LocalDateTime fechaActualizacion;
+    
+    // Constructor para inicializacion
+    public UsuarioSuscripcion() {
+        this.id = java.util.UUID.randomUUID().toString();
+        this.fechaCreacion = LocalDateTime.now();
+        this.fechaActualizacion = LocalDateTime.now();
+    }
 }

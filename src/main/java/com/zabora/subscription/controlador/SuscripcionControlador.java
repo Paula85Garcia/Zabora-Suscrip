@@ -3,65 +3,99 @@ package com.zabora.subscription.controlador;
 import com.zabora.subscription.modelo.dto.RespuestaSuscripcionDTO;
 import com.zabora.subscription.modelo.dto.RespuestaVerificacionDTO;
 import com.zabora.subscription.modelo.dto.SolicitudSuscripcionDTO;
-import com.zabora.subscription.servicio.SuscripcionServicio;
+import com.zabora.subscription.servicio.SuscripcionServicioReal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * Controlador REST para gestion de suscripciones
+ * Maneja creacion, cancelacion y consulta de suscripciones
+ */
 @RestController
 @RequestMapping("/api/suscripciones")
 @RequiredArgsConstructor
-@Tag(name = "Suscripciones", description = "Endpoints para gestión de suscripciones")
+@Tag(name = "Suscripciones", description = "Endpoints para gestion de suscripciones")
 public class SuscripcionControlador {
     
-    private final SuscripcionServicio suscripcionServicio;
+    private final SuscripcionServicioReal suscripcionServicio;
     
+    /**
+     * Suscribir usuario a un plan
+     * @param authentication Usuario autenticado
+     * @param solicitud Datos de la suscripcion
+     * @return Respuesta con detalles de la suscripcion creada
+     */
     @PostMapping("/suscribir")
     @Operation(summary = "Suscribirse a un plan")
     public ResponseEntity<RespuestaSuscripcionDTO> suscribirse(
-            @RequestHeader("X-Usuario-Id") String usuarioId,
+            Authentication authentication,
             @Valid @RequestBody SolicitudSuscripcionDTO solicitud) {
+        
+        String usuarioId = authentication.getName();
         RespuestaSuscripcionDTO respuesta = suscripcionServicio.suscribirse(usuarioId, solicitud);
         return ResponseEntity.ok(respuesta);
     }
     
+    /**
+     * Cancelar suscripcion activa
+     * @param authentication Usuario autenticado
+     * @param idSuscripcion ID de la suscripcion a cancelar
+     * @param inmediata Si es true, cancela inmediatamente. Si es false, al final del periodo
+     * @return Respuesta con detalles de la cancelacion
+     */
     @PostMapping("/cancelar/{idSuscripcion}")
-    @Operation(summary = "Cancelar suscripción")
+    @Operation(summary = "Cancelar suscripcion")
     public ResponseEntity<RespuestaSuscripcionDTO> cancelarSuscripcion(
-            @RequestHeader("X-Usuario-Id") String usuarioId,
-            @PathVariable String idSuscripcion) {
-        RespuestaSuscripcionDTO respuesta = suscripcionServicio.cancelarSuscripcion(usuarioId, idSuscripcion);
+            Authentication authentication,
+            @PathVariable String idSuscripcion,
+            @RequestParam(defaultValue = "false") Boolean inmediata) {
+        
+        String usuarioId = authentication.getName();
+        RespuestaSuscripcionDTO respuesta = suscripcionServicio.cancelarSuscripcion(
+            usuarioId, idSuscripcion, inmediata);
         return ResponseEntity.ok(respuesta);
     }
     
+    /**
+     * Obtener estado completo de la suscripcion del usuario
+     * @param authentication Usuario autenticado
+     * @return Estado detallado de la suscripcion
+     */
     @GetMapping("/estado")
-    @Operation(summary = "Obtener estado de suscripción")
+    @Operation(summary = "Obtener estado de suscripcion del usuario autenticado")
     public ResponseEntity<Map<String, Object>> obtenerEstado(
-            @RequestHeader("X-Usuario-Id") String usuarioId) {
+            Authentication authentication) {
+        
+        String usuarioId = authentication.getName();
         Map<String, Object> estado = suscripcionServicio.obtenerEstadoSuscripcion(usuarioId);
         return ResponseEntity.ok(estado);
     }
     
+    /**
+     * Verificar suscripcion de un usuario (para otros microservicios)
+     * @param usuarioId ID del usuario a verificar
+     * @return Verificacion de suscripcion premium
+     */
     @GetMapping("/verificar/{usuarioId}")
-    @Operation(summary = "Verificar suscripción (uso interno)")
+    @Operation(summary = "Verificar suscripcion (uso interno)")
     public ResponseEntity<RespuestaVerificacionDTO> verificarSuscripcion(
             @PathVariable String usuarioId) {
+        
         RespuestaVerificacionDTO verificacion = suscripcionServicio.verificarSuscripcion(usuarioId);
         return ResponseEntity.ok(verificacion);
     }
     
-    @GetMapping("/datos-mock")
-    @Operation(summary = "Obtener datos mock para pruebas")
-    public ResponseEntity<Map<String, Object>> obtenerDatosMock() {
-        Map<String, Object> datos = suscripcionServicio.obtenerDatosMock();
-        return ResponseEntity.ok(datos);
-    }
-    
+    /**
+     * Obtener todos los planes disponibles (endpoint publico)
+     * @return Lista de planes
+     */
     @GetMapping("/planes")
     @Operation(summary = "Obtener todos los planes disponibles")
     public ResponseEntity<?> obtenerPlanes() {

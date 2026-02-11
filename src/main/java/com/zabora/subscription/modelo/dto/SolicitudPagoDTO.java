@@ -11,22 +11,24 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class SolicitudPagoDTO {
     
     @NotBlank(message = "El ID de suscripción es obligatorio")
-    @Schema(description = "ID de la suscripción a pagar", 
-            example = "sub_123456789", required = true)
+    @Schema(description = "ID de la suscripción a pagar")
     private String idSuscripcion;
     
     @NotNull(message = "El monto es obligatorio")
-    @Schema(description = "Monto a pagar", example = "29900.00", required = true)
+    @Schema(description = "Monto a pagar")
     private BigDecimal monto;
     
     @NotBlank(message = "El tipo de pago es obligatorio")
-    @Schema(description = "Tipo de método de pago: 'tarjeta_credito' o 'pse'", 
-            example = "tarjeta_credito", required = true)
+    @Schema(description = "Tipo de método de pago: 'tarjeta_credito' o 'pse'")
     private String tipoPago;
     
-    @Schema(description = "Token de tarjeta para pruebas", example = "tok_visa")
+    @Schema(description = "Token de tarjeta para pruebas")
     private String tokenTarjetaPrueba;
     
-    @Schema(description = "Detalles del método de pago PSE", example = "{\"banco\":\"Bancolombia\"}")
+    @Schema(description = "Detalles del método de pago PSE")
     private String detallesPse;
+    
+    // NUEVO
+    @Schema(description = "Indica si el usuario quiere recibir factura por email")
+    private Boolean recibirFactura;
 }
