@@ -4,26 +4,28 @@ import com.zabora.subscription.modelo.enumeracion.EstadoPago;
 import com.zabora.subscription.modelo.enumeracion.TipoMetodoPago;
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Entidad Pago
+ * Corregida para compatibilidad con MariaDB
+ */
 @Entity
 @Table(name = "pagos")
 @Data
 public class Pago {
     
     @Id
-    @Column(name = "id", length = 36)
+    @Column(name = "id", length = 100)
     private String id;
     
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "suscripcion_id", nullable = false)
     private UsuarioSuscripcion suscripcion;
     
-    @Column(name = "usuario_id", nullable = false, length = 36)
+    @Column(name = "usuario_id", nullable = false, length = 100)
     private String usuarioId;
     
     @Column(name = "monto", nullable = false, precision = 10, scale = 2)
@@ -58,7 +60,7 @@ public class Pago {
     @Column(name = "referencia_pse", length = 100)
     private String referenciaPse;
     
-    @JdbcTypeCode(SqlTypes.JSON)
+    // CORRECCION: Usar LONGTEXT en lugar de JSON para MariaDB
     @Column(name = "metadatos", columnDefinition = "LONGTEXT")
     private String metadatos;
     

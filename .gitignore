@@ -31,3 +31,4 @@ application-prod.properties
 =======
 
 >>>>>>> 39a41a3 (Agregado .gitignore, limpiados archivos privados y ajustes de proyecto)
+bin
