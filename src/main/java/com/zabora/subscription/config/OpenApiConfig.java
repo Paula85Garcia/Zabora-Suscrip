@@ -20,7 +20,7 @@ public class OpenApiConfig {
     public OpenAPI zaboraOpenAPI() {
         // Servidor
         Server server = new Server();
-        server.setUrl("http://localhost:8081");
+        server.setUrl("http://localhost:8004");
         server.setDescription("Servidor de Desarrollo");
         
         // Contacto
@@ -43,25 +43,25 @@ public class OpenApiConfig {
             .license(mitLicense);
         
         // Esquema de seguridad JWT
-        SecurityScheme securityScheme = new SecurityScheme()
-            .type(SecurityScheme.Type.HTTP)
-            .scheme("bearer")
-            .bearerFormat("JWT")
-            .in(SecurityScheme.In.HEADER)
-            .name("Authorization");
+        // SecurityScheme securityScheme = new SecurityScheme()
+        //     .type(SecurityScheme.Type.HTTP)
+        //     .scheme("bearer")
+        //     .bearerFormat("JWT")
+        //     .in(SecurityScheme.In.HEADER)
+        //     .name("Authorization");
         
-        // Requerimiento de seguridad
-        SecurityRequirement securityRequirement = new SecurityRequirement()
-            .addList("bearerAuth");
+        // // Requerimiento de seguridad
+        // SecurityRequirement securityRequirement = new SecurityRequirement()
+        //     .addList("bearerAuth");
         
-        // Componentes
-        Components components = new Components()
-            .addSecuritySchemes("bearerAuth", securityScheme);
+        // // Componentes
+        // Components components = new Components()
+        //     .addSecuritySchemes("bearerAuth", securityScheme);
         
         return new OpenAPI()
             .info(info)
-            .servers(List.of(server))
-            .components(components)
-            .addSecurityItem(securityRequirement);
+            .servers(List.of(server));
+            // .components(components)
+            // .addSecurityItem(securityRequirement);
     }
 }

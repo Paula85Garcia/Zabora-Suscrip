@@ -77,7 +77,7 @@ public class SuscripcionServicioReal {
                 .estado(EstadoSuscripcion.ACTIVA.name())
                 .fechaInicio(nuevaSuscripcion.getInicioPeriodoActual())
                 .fechaExpiracion(null)
-                .limites(obtenerLimitesPlan(plan))
+//                .limites(obtenerLimitesPlan(plan))
                 .requierePago(false)
                 .build();
         }
@@ -99,7 +99,7 @@ public class SuscripcionServicioReal {
             .idSuscripcion(suscripcionId)
             .plan(plan.getNombre())
             .estado(EstadoSuscripcion.PENDIENTE_PAGO.name())
-            .limites(obtenerLimitesPlan(plan))
+//            .limites(obtenerLimitesPlan(plan))
             .requierePago(true)
             .intentoPago(paymentIntent)
             .build();
@@ -203,7 +203,7 @@ public class SuscripcionServicioReal {
                 .valida(false)
                 .plan("gratuito")
                 .estado("NO_SUBSCRIPTION")
-                .limites(obtenerLimitesPlan(planGratuito))
+//                .limites(obtenerLimitesPlan(planGratuito))
                 .build();
         }
         
@@ -215,7 +215,7 @@ public class SuscripcionServicioReal {
             .plan(suscripcion.getPlan().getNombre())
             .estado(suscripcion.getEstado().name())
             .fechaExpiracion(suscripcion.getFinPeriodoActual())
-            .limites(obtenerLimitesPlan(suscripcion.getPlan()))
+//            .limites(obtenerLimitesPlan(suscripcion.getPlan()))
             .build();
     }
     
@@ -254,7 +254,7 @@ public class SuscripcionServicioReal {
             respuesta.put("horas_restantes", horasRestantes);
             respuesta.put("cancelar_al_final_periodo", suscripcion.getCancelarAlFinalPeriodo());
             respuesta.put("horas_hasta_cancelacion", horasHastaCancelacion);
-            respuesta.put("limites", obtenerLimitesPlan(suscripcion.getPlan()));
+//            respuesta.put("limites", obtenerLimitesPlan(suscripcion.getPlan()));
             respuesta.put("es_premium", 
                 "premium".equalsIgnoreCase(suscripcion.getPlan().getNombre()) && 
                 suscripcion.getEstado() == EstadoSuscripcion.ACTIVA);
@@ -266,7 +266,7 @@ public class SuscripcionServicioReal {
             
             respuesta.put("usuario_id", usuarioId);
             respuesta.put("plan", "gratuito");
-            respuesta.put("limites", obtenerLimitesPlan(planGratuito));
+//            respuesta.put("limites", obtenerLimitesPlan(planGratuito));
             respuesta.put("es_premium", false);
         }
         
@@ -348,16 +348,16 @@ public class SuscripcionServicioReal {
     
      /** Obtener los límites del plan como mapa
      */
-    private Map<String, Object> obtenerLimitesPlan(PlanSuscripcion plan) {
-        Map<String, Object> limites = new HashMap<>();
-        limites.put("condiciones_medicas", plan.getLimiteCondicionesMedicas());
-        limites.put("alergias", plan.getLimiteAlergias());
-        limites.put("preferencias_alimentarias", plan.getLimitePreferenciasAlimentarias());
-        limites.put("ingredientes_por_busqueda", plan.getIngredientesPorBusqueda());
-        limites.put("recetas_favoritas", plan.getLimiteRecetasFavoritas());
-        return limites;
-    }
-    
+//    private Map<String, Object> obtenerLimitesPlan(PlanSuscripcion plan) {
+//        Map<String, Object> limites = new HashMap<>();
+//        limites.put("condiciones_medicas", plan.getLimiteCondicionesMedicas());
+//        limites.put("alergias", plan.getLimiteAlergias());
+//        limites.put("preferencias_alimentarias", plan.getLimitePreferenciasAlimentarias());
+//        limites.put("ingredientes_por_busqueda", plan.getIngredientesPorBusqueda());
+//        limites.put("recetas_favoritas", plan.getLimiteRecetasFavoritas());
+//        return limites;
+//    }
+//    
     /**
      * Verificar si la suscripción es elegible para reembolso
      * Dentro de las 24 horas posteriores a su creación

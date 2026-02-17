@@ -11,23 +11,24 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
+import com.zabora.subscription.data.UserContext;
 import java.util.Map;
 
 /**
- * Controlador REST para gestion de suscripciones
- * Maneja creacion, cancelacion y consulta de suscripciones
+ * Controlador REST para gestion de suscripciones Maneja creacion, cancelacion y
+ * consulta de suscripciones
  */
 @RestController
 @RequestMapping("/api/suscripciones")
 @RequiredArgsConstructor
 @Tag(name = "Suscripciones", description = "Endpoints para gestion de suscripciones")
 public class SuscripcionControlador {
-    
+
     private final SuscripcionServicioReal suscripcionServicio;
-    
+
     /**
      * Suscribir usuario a un plan
+     *
      * @param authentication Usuario autenticado
      * @param solicitud Datos de la suscripcion
      * @return Respuesta con detalles de la suscripcion creada
@@ -35,51 +36,55 @@ public class SuscripcionControlador {
     @PostMapping("/suscribir")
     @Operation(summary = "Suscribirse a un plan")
     public ResponseEntity<RespuestaSuscripcionDTO> suscribirse(
-            Authentication authentication,
+            // Authentication authentication,
             @Valid @RequestBody SolicitudSuscripcionDTO solicitud) {
-        
-        String usuarioId = authentication.getName();
+
+        String usuarioId = UserContext.get().getUserId();
         RespuestaSuscripcionDTO respuesta = suscripcionServicio.suscribirse(usuarioId, solicitud);
         return ResponseEntity.ok(respuesta);
     }
-    
+
     /**
      * Cancelar suscripcion activa
+     *
      * @param authentication Usuario autenticado
      * @param idSuscripcion ID de la suscripcion a cancelar
-     * @param inmediata Si es true, cancela inmediatamente. Si es false, al final del periodo
+     * @param inmediata Si es true, cancela inmediatamente. Si es false, al
+     * final del periodo
      * @return Respuesta con detalles de la cancelacion
      */
     @PostMapping("/cancelar/{idSuscripcion}")
     @Operation(summary = "Cancelar suscripcion")
     public ResponseEntity<RespuestaSuscripcionDTO> cancelarSuscripcion(
-            Authentication authentication,
+            // Authentication authentication,
             @PathVariable String idSuscripcion,
             @RequestParam(defaultValue = "false") Boolean inmediata) {
-        
-        String usuarioId = authentication.getName();
+
+        String usuarioId = UserContext.get().getUserId();
         RespuestaSuscripcionDTO respuesta = suscripcionServicio.cancelarSuscripcion(
-            usuarioId, idSuscripcion, inmediata);
+                usuarioId, idSuscripcion, inmediata);
         return ResponseEntity.ok(respuesta);
     }
-    
+
     /**
      * Obtener estado completo de la suscripcion del usuario
+     *
      * @param authentication Usuario autenticado
      * @return Estado detallado de la suscripcion
      */
     @GetMapping("/estado")
     @Operation(summary = "Obtener estado de suscripcion del usuario autenticado")
-    public ResponseEntity<Map<String, Object>> obtenerEstado(
-            Authentication authentication) {
-        
-        String usuarioId = authentication.getName();
+    public ResponseEntity<Map<String, Object>> obtenerEstado( // Authentication authentication
+            ) {
+
+        String usuarioId = UserContext.get().getUserId();
         Map<String, Object> estado = suscripcionServicio.obtenerEstadoSuscripcion(usuarioId);
         return ResponseEntity.ok(estado);
     }
-    
+
     /**
      * Verificar suscripcion de un usuario (para otros microservicios)
+     *
      * @param usuarioId ID del usuario a verificar
      * @return Verificacion de suscripcion premium
      */
@@ -87,13 +92,14 @@ public class SuscripcionControlador {
     @Operation(summary = "Verificar suscripcion (uso interno)")
     public ResponseEntity<RespuestaVerificacionDTO> verificarSuscripcion(
             @PathVariable String usuarioId) {
-        
+
         RespuestaVerificacionDTO verificacion = suscripcionServicio.verificarSuscripcion(usuarioId);
         return ResponseEntity.ok(verificacion);
     }
-    
+
     /**
      * Obtener todos los planes disponibles (endpoint publico)
+     *
      * @return Lista de planes
      */
     @GetMapping("/planes")
