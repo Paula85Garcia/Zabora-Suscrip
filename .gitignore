@@ -27,8 +27,120 @@ Thumbs.db
 .env
 application-local.properties
 application-prod.properties
-<<<<<<< HEAD
-=======
+# ============================================
+# ZABORA SUBSCRIPTION - .gitignore
+# ============================================
 
->>>>>>> 39a41a3 (Agregado .gitignore, limpiados archivos privados y ajustes de proyecto)
-bin
+# Secretos y configuración sensible
+src/main/resources/application.yml
+src/main/resources/application.properties
+src/main/resources/application-*.yml
+src/main/resources/application-*.properties
+
+# Variables de entorno
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.env
+
+# Claves y secrets
+stripe_keys.txt
+secrets.txt
+credentials.json
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# IDE - Eclipse
+.classpath
+.project
+.settings/
+bin/
+.metadata
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.loadpath
+.recommenders
+
+# IDE - VS Code
+.vscode/
+*.code-workspace
+.history/
+
+# IDE - NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# Logs
+logs/
+*.log
+log/
+*.log.*
+application.log
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Temporal
+*.tmp
+*.temp
+*~
+
+# Test coverage
+.coverage
+htmlcov/
+coverage/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# Package Files
+*.zip
+*.tar.gz
+*.rar
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
