@@ -16,7 +16,7 @@ import java.util.Optional;
  * Gestiona todas las operaciones de base de datos relacionadas con las suscripciones de usuarios
  */
 @Repository
-public interface UsuarioSuscripcionRepository extends JpaRepository<UsuarioSuscripcion, String> {
+public interface UsuarioSuscripcionRepositorio extends JpaRepository<UsuarioSuscripcion, String> {
     
     /**
      * Buscar la suscripción activa de un usuario
@@ -77,9 +77,9 @@ public interface UsuarioSuscripcionRepository extends JpaRepository<UsuarioSuscr
     boolean existsByUsuarioIdAndEstado(String usuarioId, EstadoSuscripcion estado);
     
     /**
-     * Buscar por ID de suscripción de Stripe
+     * Buscar por ID de suscripción
      */
-    Optional<UsuarioSuscripcion> findByIdSuscripcionStripe(String stripeSubscriptionId);
+    Optional<UsuarioSuscripcion> findByIdSuscripcion(String idSuscripcion);
     
     /**
      * Buscar suscripciones creadas dentro de un rango de fechas

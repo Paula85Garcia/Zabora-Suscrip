@@ -15,12 +15,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SeguridadConfig {
     
-    // private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    
-    // @Bean
-    // public PasswordEncoder passwordEncoder() {
-    //     return new BCryptPasswordEncoder();
-    // }
     
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -31,16 +25,11 @@ public class SeguridadConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 
-                // ENDPOINTS PÚBLICOS - NO REQUIEREN AUTENTICACIÓN
-                
-                
-                // Autenticación
-                // .requestMatchers("/api/auth/**").permitAll()
                 
                 // // Planes (lectura pública)
                  .requestMatchers("/api/suscripciones/planes").permitAll()
                 
-                // Webhooks de Stripe
+                // Webhooks de 
                 .requestMatchers("/api/webhooks/**").permitAll()
                 
                 // Swagger/OpenAPI
@@ -64,29 +53,10 @@ public class SeguridadConfig {
                 
                 .anyRequest().permitAll()
             );
-            // .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            // .headers(headers -> headers
-            //     .frameOptions(frame -> frame.sameOrigin()) // Para H2 Console
-            // );
+            
         
         return http.build();
     }
     
-    // @Bean
-    // public CorsConfigurationSource corsConfigurationSource() {
-    //     CorsConfiguration configuration = new CorsConfiguration();
-    //     configuration.setAllowedOrigins(List.of(
-    //         "http://localhost:4200",
-    //         "http://localhost:3000",
-    //         "http://localhost:8081"
-    //     ));
-    //     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-    //     configuration.setAllowedHeaders(Arrays.asList("*"));
-    //     configuration.setAllowCredentials(true);
-    //     configuration.setMaxAge(3600L);
-        
-    //     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    //     source.registerCorsConfiguration("/**", configuration);
-    //     return source;
-    // }
+    
 }

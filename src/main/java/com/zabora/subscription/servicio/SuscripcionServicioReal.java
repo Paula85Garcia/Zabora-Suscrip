@@ -2,17 +2,16 @@ package com.zabora.subscription.servicio;
 
 import com.zabora.subscription.modelo.dto.RespuestaSuscripcionDTO;
 import com.zabora.subscription.modelo.dto.RespuestaVerificacionDTO;
-import com.zabora.subscription.modelo.dto.SolicitudSuscripcionDTO;
 import com.zabora.subscription.modelo.entidad.PlanSuscripcion;
 import com.zabora.subscription.modelo.entidad.UsuarioSuscripcion;
 import com.zabora.subscription.modelo.enumeracion.EstadoSuscripcion;
-import com.zabora.subscription.repositorio.PlanSuscripcionRepository;
-import com.zabora.subscription.repositorio.UsuarioSuscripcionRepository;
+import com.zabora.subscription.repositorio.PlanSuscripcionRepositorio;
+import com.zabora.subscription.repositorio.UsuarioSuscripcionRepositorio;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.zabora.subscription.modelo.dto.SolicitudSuscripcionDTO;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -27,8 +26,8 @@ import java.util.*;
 @RequiredArgsConstructor
 public class SuscripcionServicioReal {
     
-    private final PlanSuscripcionRepository planRepository;
-    private final UsuarioSuscripcionRepository suscripcionRepository;
+    private final PlanSuscripcionRepositorio planRepository;
+    private final UsuarioSuscripcionRepositorio suscripcionRepository;
     
     /**
      * Suscribe a un usuario a un plan
@@ -346,17 +345,6 @@ public class SuscripcionServicioReal {
     }
     
     
-     /** Obtener los límites del plan como mapa
-     */
-//    private Map<String, Object> obtenerLimitesPlan(PlanSuscripcion plan) {
-//        Map<String, Object> limites = new HashMap<>();
-//        limites.put("condiciones_medicas", plan.getLimiteCondicionesMedicas());
-//        limites.put("alergias", plan.getLimiteAlergias());
-//        limites.put("preferencias_alimentarias", plan.getLimitePreferenciasAlimentarias());
-//        limites.put("ingredientes_por_busqueda", plan.getIngredientesPorBusqueda());
-//        limites.put("recetas_favoritas", plan.getLimiteRecetasFavoritas());
-//        return limites;
-//    }
 //    
     /**
      * Verificar si la suscripción es elegible para reembolso

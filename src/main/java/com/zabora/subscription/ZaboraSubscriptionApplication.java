@@ -13,6 +13,7 @@ public class ZaboraSubscriptionApplication {
     public static void main(String[] args) {
         SpringApplication.run(ZaboraSubscriptionApplication.class, args);
         
+         
         System.out.println("===============================================");
         System.out.println("Zabora Subscription Service iniciado!");
         System.out.println("===============================================");
@@ -26,8 +27,8 @@ public class ZaboraSubscriptionApplication {
         System.out.println("  POST   /api/suscripciones/cancelar/{id}");
         System.out.println("  GET    /api/suscripciones/estado");
         System.out.println("  GET    /api/suscripciones/planes");
-        System.out.println("  POST   /api/pagos/crear-intent");
-        System.out.println("  POST   /api/webhooks/stripe");
+        System.out.println("  POST   /api/pagos/crear-preferencia");
+        System.out.println("  POST   /api/webhooks/mercadopago");
         System.out.println("===============================================");
     }
 }

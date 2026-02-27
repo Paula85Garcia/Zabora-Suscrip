@@ -37,11 +37,11 @@ public class UsuarioSuscripcion {
     @Column(name = "fecha_cancelacion")
     private LocalDateTime fechaCancelacion;
     
-    @Column(name = "id_cliente_stripe", length = 255)
-    private String idClienteStripe;
+    @Column(name = "id_cliente", length = 255)
+    private String idCliente;
     
-    @Column(name = "id_suscripcion_stripe", length = 255)
-    private String idSuscripcionStripe;
+    @Column(name = "id_suscripcion", length = 255)
+    private String idSuscripcion;
     
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;

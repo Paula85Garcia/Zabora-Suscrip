@@ -11,7 +11,7 @@ import java.util.Optional;
  * Repositorio para operaciones de la entidad PlanSuscripcion
  */
 @Repository
-public interface PlanSuscripcionRepository extends JpaRepository<PlanSuscripcion, Long> {
+public interface PlanSuscripcionRepositorio extends JpaRepository<PlanSuscripcion, Long> {
     
     /**
      * Buscar un plan por nombre (ignorando mayúsculas y minúsculas)
