@@ -1,4 +1,4 @@
-package com.zabora.subscription.config;
+/*package com.zabora.subscription.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -66,4 +66,4 @@ public class CorsConfig {
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
-}
+}*/
