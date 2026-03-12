@@ -15,7 +15,7 @@ public class UsuarioSuscripcion {
     private String id;
     
     @Column(name = "usuario_id", nullable = false, length = 100)
-    private String usuarioId;
+    private Integer usuarioId;
     
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "plan_id", nullable = false)

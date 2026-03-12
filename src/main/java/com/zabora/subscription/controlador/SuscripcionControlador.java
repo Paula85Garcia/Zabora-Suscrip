@@ -39,7 +39,7 @@ public class SuscripcionControlador {
             // Authentication authentication,
             @Valid @RequestBody SolicitudSuscripcionDTO solicitud) {
 
-        String usuarioId = UserContext.get().getUserId();
+        Integer usuarioId = UserContext.get().getUserId();
         RespuestaSuscripcionDTO respuesta = suscripcionServicio.suscribirse(usuarioId, solicitud);
         return ResponseEntity.ok(respuesta);
     }
@@ -60,7 +60,7 @@ public class SuscripcionControlador {
             @PathVariable String idSuscripcion,
             @RequestParam(defaultValue = "false") Boolean inmediata) {
 
-        String usuarioId = UserContext.get().getUserId();
+        Integer usuarioId = UserContext.get().getUserId();
         RespuestaSuscripcionDTO respuesta = suscripcionServicio.cancelarSuscripcion(
                 usuarioId, idSuscripcion, inmediata);
         return ResponseEntity.ok(respuesta);
@@ -77,7 +77,7 @@ public class SuscripcionControlador {
     public ResponseEntity<Map<String, Object>> obtenerEstado( // Authentication authentication
             ) {
 
-        String usuarioId = UserContext.get().getUserId();
+        Integer usuarioId = UserContext.get().getUserId();
         Map<String, Object> estado = suscripcionServicio.obtenerEstadoSuscripcion(usuarioId);
         return ResponseEntity.ok(estado);
     }
@@ -91,7 +91,7 @@ public class SuscripcionControlador {
     @GetMapping("/verificar/{usuarioId}")
     @Operation(summary = "Verificar suscripcion (uso interno)")
     public ResponseEntity<RespuestaVerificacionDTO> verificarSuscripcion(
-            @PathVariable String usuarioId) {
+            @PathVariable Integer usuarioId) {
 
         RespuestaVerificacionDTO verificacion = suscripcionServicio.verificarSuscripcion(usuarioId);
         return ResponseEntity.ok(verificacion);

@@ -35,7 +35,7 @@ public class SuscripcionServicioReal {
      * instante Si es premium, primero hay que pagar
      */
     @Transactional
-    public RespuestaSuscripcionDTO suscribirse(String usuarioId, SolicitudSuscripcionDTO solicitud) {
+    public RespuestaSuscripcionDTO suscribirse(Integer usuarioId, SolicitudSuscripcionDTO solicitud) {
         log.info("User {} subscribing to plan {}", usuarioId, solicitud.getNombrePlan());
 
         // Find plan
@@ -107,7 +107,7 @@ public class SuscripcionServicioReal {
      */
     @Transactional
     public RespuestaSuscripcionDTO cancelarSuscripcion(
-            String usuarioId,
+            Integer usuarioId,
             String idSuscripcion,
             Boolean inmediata) {
 
@@ -184,7 +184,7 @@ public class SuscripcionServicioReal {
      * Verifica si el usuario tiene una suscripción premium válida Lo usan otros
      * microservicios para saber si darle acceso o no
      */
-    public RespuestaVerificacionDTO verificarSuscripcion(String usuarioId) {
+    public RespuestaVerificacionDTO verificarSuscripcion(Integer usuarioId) {
         Optional<UsuarioSuscripcion> suscripcionOpt
                 = suscripcionRepository.findByUsuarioIdAndEstado(usuarioId, EstadoSuscripcion.ACTIVA);
 
@@ -216,7 +216,7 @@ public class SuscripcionServicioReal {
     /**
      * Obtener el estado de suscripción completo para un usuario
      */
-    public Map<String, Object> obtenerEstadoSuscripcion(String usuarioId) {
+    public Map<String, Object> obtenerEstadoSuscripcion(Integer usuarioId) {
         Map<String, Object> respuesta = new HashMap<>();
 
         Optional<UsuarioSuscripcion> suscripcionOpt
@@ -278,7 +278,7 @@ public class SuscripcionServicioReal {
      * Activar suscripción tras pago exitoso * Llamado del servicio de pago
      */
     @Transactional
-    public void activarSuscripcion(String userId) {
+   public void activarSuscripcion(Integer userId) {
         Optional<UsuarioSuscripcion> suscripcionOpt
                 = suscripcionRepository.findByUsuarioIdAndEstado(userId, EstadoSuscripcion.PENDIENTE_PAGO);
 
@@ -298,13 +298,9 @@ public class SuscripcionServicioReal {
         suscripcionRepository.save(suscripcion);
 
         log.info("Subscription activated for user: {}", userId);
-        try {
-            authClient.actualizarRolPremium(userId);
-            log.info("User role upgraded to PREMIUM in auth-service for user: {}", userId);
-        } catch (Exception e) {
-            log.error("Error updating user role in auth-service for user: {}", userId, e);
-            throw new RuntimeException("Subscription activated but role update failed");
-        }
+        
+       
+          authClient.actualizarRolPremium(userId);
     }
 
     /**
@@ -322,7 +318,17 @@ public class SuscripcionServicioReal {
             suscripcionRepository.save(suscripcion);
 
             log.info("Subscription cancelled (scheduled): {}", suscripcion.getId());
+        
+            Integer userId = suscripcion.getUsuarioId();
+
+try {
+    authClient.revertirAGratuito(userId);
+    log.info("User downgraded to FREE: {}", userId);
+} catch (Exception e) {
+    log.error("Error downgrading user {}", userId, e);
+}
         }
+           
     }
 
     /**
@@ -339,7 +345,17 @@ public class SuscripcionServicioReal {
             suscripcionRepository.save(suscripcion);
 
             log.info("Subscription expired: {}", suscripcion.getId());
-        }
+       
+       Integer userId = suscripcion.getUsuarioId();
+
+try {
+    authClient.revertirAGratuito(userId);
+    log.info("User downgraded to FREE (expired): {}", userId);
+} catch (Exception e) {
+    log.error("Error downgrading expired user {}", userId, e);
+}
+        } 
+
     }
 
 //    

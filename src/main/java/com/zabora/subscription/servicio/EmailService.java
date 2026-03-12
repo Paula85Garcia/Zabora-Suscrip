@@ -22,13 +22,13 @@ public class EmailService {
      */
     public void enviarConfirmacionPago(Pago pago) {
         if (!emailEnabled) {
-            log.info("📧 [SIMULADO] Confirmación de pago enviada para: {}", pago.getUsuarioId());
+            log.info("[SIMULADO] Confirmación de pago enviada para: {}", pago.getUsuarioId());
             return;
         }
         
         
         String mensaje = construirMensajeConfirmacion(pago);
-        log.info("📧 Email de confirmación: {}", mensaje);
+        log.info("Email de confirmación: {}", mensaje);
     }
     
     /**
@@ -48,7 +48,7 @@ public class EmailService {
     /**
      * Envía notificación de pago fallido
      */
-    public void enviarNotificacionPagoFallido(String usuarioId, String motivo) {
+    public void enviarNotificacionPagoFallido(Integer usuarioId, String motivo) {
         if (!emailEnabled) {
             log.info(" [SIMULADO] Notificación de fallo enviada para: {}", usuarioId);
             return;
@@ -60,7 +60,7 @@ public class EmailService {
     /**
      * Envía recordatorio de renovación próxima
      */
-    public void enviarRecordatorioRenovacion(String usuarioId, int diasRestantes) {
+    public void enviarRecordatorioRenovacion(Integer usuarioId, int diasRestantes) {
         if (!emailEnabled) {
             log.info(" [SIMULADO] Recordatorio de renovación: {} - {} días", 
                     usuarioId, diasRestantes);

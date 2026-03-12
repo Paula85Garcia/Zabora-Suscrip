@@ -22,19 +22,19 @@ public interface UsuarioSuscripcionRepositorio extends JpaRepository<UsuarioSusc
      * Buscar la suscripción activa de un usuario
      * Un usuario solo puede tener una suscripción activa a la vez
      */
-    Optional<UsuarioSuscripcion> findByUsuarioIdAndEstado(String usuarioId, EstadoSuscripcion estado);
+    Optional<UsuarioSuscripcion> findByUsuarioIdAndEstado(Integer usuarioId, EstadoSuscripcion estado);
     
     /**
      * Buscar la suscripción más reciente de un usuario
      * Útil para consultar el historial de suscripciones
      */
-    Optional<UsuarioSuscripcion> findTopByUsuarioIdOrderByFechaCreacionDesc(String usuarioId);
+    Optional<UsuarioSuscripcion> findTopByUsuarioIdOrderByFechaCreacionDesc(Integer usuarioId);
     
     /**
      * Buscar todas las suscripciones de un usuario
      * Ordenadas por fecha de creación descendente
      */
-    List<UsuarioSuscripcion> findByUsuarioIdOrderByFechaCreacionDesc(String usuarioId);
+    List<UsuarioSuscripcion> findByUsuarioIdOrderByFechaCreacionDesc(Integer usuarioId);
     
     /**
      * Buscar suscripciones que están próximas a expirar
@@ -74,7 +74,7 @@ public interface UsuarioSuscripcionRepositorio extends JpaRepository<UsuarioSusc
     /**
      * Verificar si el usuario tiene alguna suscripción activa
      */
-    boolean existsByUsuarioIdAndEstado(String usuarioId, EstadoSuscripcion estado);
+    boolean existsByUsuarioIdAndEstado(Integer usuarioId, EstadoSuscripcion estado);
     
     /**
      * Buscar por ID de suscripción

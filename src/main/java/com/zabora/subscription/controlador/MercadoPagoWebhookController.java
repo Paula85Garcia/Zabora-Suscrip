@@ -43,7 +43,9 @@ public class MercadoPagoWebhookController {
             @RequestParam(required = false) Map<String, String> params
     ) {
         try {
-            log.info("Webhook recibido de MercadoPago");
+            log.info("═══════════════════════════════════════");
+            log.info("WEBHOOK RECIBIDO DE MERCADOPAGO");
+            log.info("═══════════════════════════════════════");
             log.info("Payload: {}", payload);
 
             String type = (String) payload.get("type");
@@ -72,47 +74,85 @@ public class MercadoPagoWebhookController {
             String paymentIdStr = (String) data.get("id");
             Long paymentId = Long.parseLong(paymentIdStr);
 
-            log.info("Procesando pago ID: {}", paymentId);
+            log.info("Payment ID detectado: {}", paymentId);
 
             PaymentClient client = new PaymentClient();
             Payment payment = client.get(paymentId);
 
-            log.info("Detalles del pago:");
+            log.info("═══════════════════════════════════════");
+            log.info("DETALLES DEL PAGO");
+            log.info("═══════════════════════════════════════");
             log.info("ID: {}", payment.getId());
             log.info("Status: {}", payment.getStatus());
             log.info("Amount: {}", payment.getTransactionAmount());
 
-            Map<String, Object> metadata = payment.getMetadata();
-            String suscripcionId = (String) metadata.get("suscripcion_id");
-            String usuarioId = (String) metadata.get("usuario_id");
+           Map<String, Object> metadata = payment.getMetadata();
+String suscripcionId = (String) metadata.get("suscripcion_id");
 
-            log.info("Suscripcion ID: {}", suscripcionId);
-            log.info("Usuario ID: {}", usuarioId);
+// ✅ CORREGIDO: Maneja Integer, Double y String
+Object usuarioIdObj = metadata.get("usuario_id");
+Integer usuarioId = null;
 
+if (usuarioIdObj instanceof Integer) {
+    usuarioId = (Integer) usuarioIdObj;
+    log.info("usuario_id es Integer: {}", usuarioId);
+} else if (usuarioIdObj instanceof Double) {
+    usuarioId = ((Double) usuarioIdObj).intValue();
+    log.info("usuario_id es Double, convertido a Integer: {}", usuarioId);
+} else if (usuarioIdObj instanceof String) {
+    try {
+        String str = (String) usuarioIdObj;
+        if (str.contains(".")) {
+            usuarioId = Double.valueOf(str).intValue();
+        } else {
+            usuarioId = Integer.parseInt(str);
+        }
+        log.info("usuario_id es String, convertido a Integer: {}", usuarioId);
+    } catch (NumberFormatException e) {
+        log.error("No se pudo convertir usuario_id String a Integer: {}", usuarioIdObj);
+        return;
+    }
+} else {
+    log.error("Tipo inesperado para usuario_id: {}", 
+              usuarioIdObj != null ? usuarioIdObj.getClass() : "null");
+    return;
+}
+
+log.info("Suscripción ID: {}", suscripcionId);
+log.info("Usuario ID: {}", usuarioId);
+
+            // Buscar pago en BD
             Pago pagoLocal = pagoRepositorio.findBySuscripcionIdAndEstado(
                     suscripcionId,
                     EstadoPago.PENDIENTE
             ).orElse(null);
 
             if (pagoLocal == null) {
-                log.warn("No se encontro pago pendiente para suscripcion: {}", suscripcionId);
+                log.warn("No se encontró pago pendiente para suscripción: {}", suscripcionId);
                 return;
             }
 
             log.info("Pago encontrado en BD: {}", pagoLocal.getId());
 
             String status = payment.getStatus();
-            actualizarPagoSegunEstado(pagoLocal, status, payment, suscripcionId);
+            actualizarPagoSegunEstado(pagoLocal, status, payment, suscripcionId, usuarioId);
 
         } catch (MPException | MPApiException e) {
             log.error("Error consultando pago en MercadoPago: {}", e.getMessage());
         } catch (Exception e) {
-            log.error("Error procesando notificacion de pago: {}", e.getMessage(), e);
+            log.error("Error procesando notificación de pago: {}", e.getMessage(), e);
         }
     }
 
-    private void actualizarPagoSegunEstado(Pago pago, String mpStatus, Payment mpPayment, String suscripcionId) {
-        log.info("Actualizando pago segun estado de MercadoPago: {}", mpStatus);
+    
+    private void actualizarPagoSegunEstado(
+            Pago pago, 
+            String mpStatus, 
+            Payment mpPayment, 
+            String suscripcionId,
+            Integer usuarioId) {
+        
+        log.info("Actualizando pago según estado de MercadoPago: {}", mpStatus);
 
         switch (mpStatus) {
             case "approved":
@@ -123,9 +163,10 @@ public class MercadoPagoWebhookController {
                 pago.setCodigoAutorizacion(mpPayment.getAuthorizationCode());
                 pago.setFechaPago(LocalDateTime.now());
                 pagoRepositorio.save(pago);
+                
                 log.info("Pago actualizado a COMPLETADO");
 
-                activarSuscripcion(suscripcionId);
+                activarSuscripcion(suscripcionId, usuarioId);
                 break;
 
             case "pending":
@@ -152,51 +193,74 @@ public class MercadoPagoWebhookController {
         }
     }
 
-    private void activarSuscripcion(String suscripcionId) {
+    
+    private void activarSuscripcion(String suscripcionId, Integer usuarioId) {
         try {
+            log.info("═══════════════════════════════════════");
+            log.info("ACTIVANDO SUSCRIPCIÓN");
+            log.info("═══════════════════════════════════════");
+            log.info("Suscripción ID: {}", suscripcionId);
+            log.info("Usuario ID: {}", usuarioId);
+            
             Optional<UsuarioSuscripcion> suscripcionOpt = suscripcionRepositorio.findById(suscripcionId);
 
             if (suscripcionOpt.isEmpty()) {
-                log.error("Suscripcion no encontrada: {}", suscripcionId);
+                log.error("Suscripción no encontrada: {}", suscripcionId);
                 return;
             }
 
             UsuarioSuscripcion suscripcion = suscripcionOpt.get();
 
-            if (suscripcion.getEstado() != EstadoSuscripcion.PENDIENTE_PAGO) {
-                log.warn("Suscripcion no esta en PENDIENTE_PAGO: {}", suscripcion.getEstado());
-                return;
-            }
+            log.info("Suscripción encontrada");
+            log.info("   - Estado actual: {}", suscripcion.getEstado());
+            log.info("   - Usuario ID: {}", suscripcion.getUsuarioId());
+            log.info("   - Plan: {}", suscripcion.getPlan().getNombre());
 
+
+            // SOLO ACTIVAR SI ESTÁ PENDIENTE
+
+            if (suscripcion.getEstado() == EstadoSuscripcion.PENDIENTE_PAGO) {
             LocalDateTime now = LocalDateTime.now();
             suscripcion.setEstado(EstadoSuscripcion.ACTIVA);
             suscripcion.setInicioPeriodoActual(now);
             suscripcion.setFinPeriodoActual(now.plusDays(30));
             suscripcion.setFechaActualizacion(now);
+            suscripcionRepositorio.save(suscripcion);
+            log.info("Suscripción {} activada exitosamente", suscripcionId);
+        } else {
+            log.info("Suscripción ya estaba en estado: {}", suscripcion.getEstado());
+        }
+
 
             suscripcionRepositorio.save(suscripcion);
 
-            log.info("Suscripcion {} activada exitosamente", suscripcionId);
+            log.info("Suscripción {} activada exitosamente", suscripcionId);
+            log.info("Válida hasta: {}", suscripcion.getFinPeriodoActual());
 
-            String usuarioId = suscripcion.getUsuarioId();
-
-            try {
-                authClient.actualizarRolPremium(usuarioId);
-                log.info("Rol PREMIUM actualizado en auth-service para usuario: {}", usuarioId);
-            } catch (Exception e) {
-                log.error("Error actualizando rol en auth-service: {}", e.getMessage(), e);
-            }
-            log.info("Usuario: {}", suscripcion.getUsuarioId());
-            log.info("Valida hasta: {}", suscripcion.getFinPeriodoActual());
-
+            // ACTUALIZAR ROL EN AUTH SERVICE
+           // SIEMPRE LLAMAR A AUTH-SERVICE (aunque ya esté activa)
+        log.info("═══════════════════════════════════════");
+        log.info("ACTUALIZANDO ROL EN AUTH SERVICE");
+        log.info("═══════════════════════════════════════");
+        log.info("POST http://localhost:8000/api/upgrade/premium/{}", usuarioId);
+        
+        try {
+            authClient.actualizarRolPremium(usuarioId);
+            log.info("Rol PREMIUM actualizado en auth-service");
         } catch (Exception e) {
-            log.error("Error activando suscripcion: {}", e.getMessage(), e);
+            log.error("Error al actualizar rol en auth-service", e);
         }
+        
+        log.info("═══════════════════════════════════════");
+
+    } catch (Exception e) {
+        log.error("Error activando suscripción: {}", e.getMessage(), e);
     }
+}
 
     @GetMapping
     public ResponseEntity<String> verificarWebhook() {
-        log.info("Verificacion de webhook");
+        log.info("Verificación de webhook");
         return ResponseEntity.ok("Webhook activo");
     }
 }

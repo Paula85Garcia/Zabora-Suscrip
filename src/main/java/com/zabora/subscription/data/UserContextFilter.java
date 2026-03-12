@@ -19,7 +19,7 @@ public class UserContextFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        String userId = request.getHeader("X-User-Id");
+        Integer userId = request.getHeader("X-User-Id") != null ? Integer.valueOf(request.getHeader("X-User-Id")) : null;
         String email = request.getHeader("X-User-Email");
         String role = request.getHeader("X-User-Role");
 

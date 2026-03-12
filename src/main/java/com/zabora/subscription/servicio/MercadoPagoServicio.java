@@ -16,8 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +30,10 @@ public class MercadoPagoServicio {
     @Value("${mercadopago.public-key}")
     private String publicKey;
 
-    @Value("${mercadopago.notification-url:#{null}}")  
+    @Value("${mercadopago.environment:test}")  
+    private String environment;
+
+    @Value("${mercadopago.webhook.notification-url:#{null}}")  
     private String notificationUrl;
 
     @Value("${mercadopago.success-url}")
@@ -51,8 +52,10 @@ public class MercadoPagoServicio {
             log.info("===========================================");
             log.info("MERCADOPAGO INICIALIZADO");
             log.info("===========================================");
+            log.info("Environment: {}", environment);
             log.info("Access Token: {}...", accessToken.substring(0, 30));
             log.info("Public Key: {}", publicKey);
+            log.info("Notification URL: {}", notificationUrl);
             log.info("===========================================");
         } catch (Exception e) {
             log.error("Error inicializando MercadoPago: {}", e.getMessage());
@@ -60,7 +63,8 @@ public class MercadoPagoServicio {
     }
 
     public CrearPagoResponse crearPreferenciaPago(CrearPagoRequest request) {
-        String usuarioId = obtenerUsuarioId();
+
+        Integer usuarioId = obtenerUsuarioId();
         String usuarioEmail = obtenerUsuarioEmail();
         
         log.info("===========================================");
@@ -90,7 +94,6 @@ public class MercadoPagoServicio {
                     .pending(pendingUrl)
                     .build();
 
-            // Metadata
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("suscripcion_id", request.getIdSuscripcion());
             metadata.put("usuario_id", usuarioId);
@@ -104,7 +107,7 @@ public class MercadoPagoServicio {
             PreferenceRequest.PreferenceRequestBuilder builder = PreferenceRequest.builder()
                     .items(List.of(item))
                     .backUrls(backUrls)
-                    .autoReturn("approved")
+                    //.autoReturn("approved")
                     .metadata(metadata)
                     .payer(payer)
                     .externalReference(request.getIdSuscripcion())
@@ -146,7 +149,6 @@ public class MercadoPagoServicio {
             log.error("Status Code: {}", e.getStatusCode());
             log.error("Message: {}", e.getMessage());
             
-            // EXTRAER CONTENIDO REAL
             String errorContent = "No disponible";
             try {
                 if (e.getApiResponse() != null) {
@@ -187,14 +189,14 @@ public class MercadoPagoServicio {
         return publicKey;
     }
 
-    private String obtenerUsuarioId() {
+    private Integer obtenerUsuarioId() {
         try {
-            String userId = UserContext.get().getUserId();
+            Integer userId = UserContext.get().getUserId();
             log.info("Usuario ID desde contexto: {}", userId);
             return userId;
         } catch (Exception e) {
-            log.warn("Usuario ID no disponible en contexto, usando default");
-            return "3223648585";
+            log.warn("Usuario ID no disponible en contexto");
+            throw new RuntimeException("Usuario no autenticado");
         }
     }
 
@@ -202,10 +204,9 @@ public class MercadoPagoServicio {
         try {
             String email = UserContext.get().getEmail();
             log.info("Email desde contexto: {}", email);
-            return email;
+            return email != null ? email : "test_user_54198363@testuser.com";
         } catch (Exception e) {
             log.warn("Email no disponible en contexto, usando default");
-            // Email de prueba genérico de MercadoPago que SIEMPRE funciona
             return "test_user_54198363@testuser.com";
         }
     }

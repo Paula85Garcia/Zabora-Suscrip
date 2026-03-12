@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface PagoRepositorio extends JpaRepository<Pago, String> {
     
-    List<Pago> findByUsuarioIdOrderByFechaCreacionDesc(String usuarioId);
+    List<Pago> findByUsuarioIdOrderByFechaCreacionDesc(Integer usuarioId);
     
     Optional<Pago> findByIdIntentoPago(String idIntentoPago);
     
@@ -21,7 +21,7 @@ public interface PagoRepositorio extends JpaRepository<Pago, String> {
     
     List<Pago> findByEstado(EstadoPago estado);
     
-    List<Pago> findByUsuarioIdAndEstado(String usuarioId, EstadoPago estado);
+    List<Pago> findByUsuarioIdAndEstado(Integer usuarioId, EstadoPago estado);
     
-    long countByUsuarioIdAndEstado(String usuarioId, EstadoPago estado);
+    long countByUsuarioIdAndEstado(Integer usuarioId, EstadoPago estado);
 }

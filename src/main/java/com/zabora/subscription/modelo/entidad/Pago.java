@@ -28,7 +28,7 @@ public class Pago {
     private String suscripcionId;
 
     @Column(name = "usuario_id", length = 100, nullable = false)
-    private String usuarioId;
+    private Integer usuarioId;
 
     @Column(name = "monto", nullable = false, precision = 10, scale = 2)
     private BigDecimal monto;
