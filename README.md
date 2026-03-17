@@ -1,6 +1,6 @@
 # GUÍA COMPLETA: SISTEMA DE SUSCRIPCIONES ZABORA
 
-Esta guía te ayudará a entender y configurar el sistema de suscripciones de Zabora.
+Esta guía te ayudará a entender y configurar el sistema de suscripciones de Zabora, siguiendo el mismo formato detallado del ejemplo de recetas.
 
 ---
 
@@ -11,22 +11,23 @@ Esta guía te ayudará a entender y configurar el sistema de suscripciones de Za
 3. [Características Principales](#características-principales)
 4. [Requisitos Previos](#requisitos-previos)
 5. [Instalación y Configuración](#instalación-y-configuración)
-6. [Estructura de la Base de Datos](#estructura-de-la-base-de-datos)
-7. [Puntos finales de la API](#puntos-finales-de-la-api)
+6. [Instalación de Ngrok](#instalación-de-ngrok)
+7. [Estructura de la Base de Datos](#estructura-de-la-base-de-datos)
+8. [Puntos finales de la API](#puntos-finales-de-la-api)
    - [Suscripciones](#suscripciones)
    - [Pagos](#pagos)
    - [Planes](#planes)
    - [Webhooks](#webhooks)
-8. [Integración con MercadoPago](#integración-con-mercadopago)
-9. [Ejemplos de uso](#ejemplos-de-uso)
-10. [Pruebas](#pruebas)
-11. [Solución de Problemas](#solución-de-problemas)
+9. [Integración con MercadoPago](#integración-con-mercadopago)
+10. [Ejemplos de uso](#ejemplos-de-uso)
+11. [Pruebas](#pruebas)
+12. [Solución de Problemas](#solución-de-problemas)
 
 ---
 
 ## ARQUITECTURA DEL SISTEMA DE SUSCRIPCIONES
 
-### **Visión General**
+### Visión General
 
 El sistema de suscripciones de Zabora está diseñado como un microservicio independiente que se comunica con el Auth Service y el API Gateway.
 
@@ -34,7 +35,7 @@ El sistema de suscripciones de Zabora está diseñado como un microservicio inde
 ┌─────────────────────────────────────────────────────────────────┐
 │                        INTERNET                                  │
 │                            ↓                                     │
-│                    🌐 NGROK TUNNEL (Testing)                     │
+│                    NGROK TUNNEL (Testing)                        │
 │         https://abc123.ngrok-free.app                            │
 │                            ↓                                     │
 └─────────────────────────────────────────────────────────────────┘
@@ -43,7 +44,7 @@ El sistema de suscripciones de Zabora está diseñado como un microservicio inde
 │                    LOCALHOST (Tu PC)                             │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  🌐 API GATEWAY (Puerto 9000)                            │  │
+│  │  API GATEWAY (Puerto 9000)                                │  │
 │  │  Ruta: /api/suscripciones/** → Subscription Service      │  │
 │  │  Ruta: /api/pagos/**        → Subscription Service       │  │
 │  │  Ruta: /api/webhooks/**     → Subscription Service       │  │
@@ -52,7 +53,7 @@ El sistema de suscripciones de Zabora está diseñado como un microservicio inde
 │           │                                                     │
 │           ↓                                                     │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  💳 SUBSCRIPTION SERVICE (Puerto 8004)                   │  │
+│  │  SUBSCRIPTION SERVICE (Puerto 8004)                       │  │
 │  │  ┌────────────────────────────────────────────────────┐  │  │
 │  │  │ Controladores:                                     │  │  │
 │  │  │ - SuscripcionController                            │  │  │
@@ -87,20 +88,20 @@ El sistema de suscripciones de Zabora está diseñado como un microservicio inde
 │                       │                                         │
 │                       ↓                                         │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  👤 AUTH SERVICE (Puerto 8000)                           │  │
+│  │  AUTH SERVICE (Puerto 8000)                               │  │
 │  │  Endpoint: /api/upgrade/premium/{userId}                 │  │
 │  │  Función: Actualizar rol de usuario a PREMIUM            │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                       │                                         │
 │                       ↓                                         │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  💾 BASES DE DATOS (Puerto 3306)                         │  │
+│  │  BASES DE DATOS (Puerto 3306)                             │  │
 │  │  - zabora_subscriptions (suscripciones, pagos, planes)   │  │
 │  │  - zabora_auth (usuarios, roles)                         │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │  🎨 FRONTEND - ANGULAR (Puerto 4200)                     │  │
+│  │  FRONTEND - ANGULAR (Puerto 4200)                         │  │
 │  │  Páginas: /suscripciones/planes, /mi-suscripcion         │  │
 │  │  Servicios: pago.service.ts, suscripcion.service.ts      │  │
 │  └──────────────────────────────────────────────────────────┘  │
@@ -128,14 +129,14 @@ El sistema de suscripciones de Zabora está diseñado como un microservicio inde
 ## CARACTERÍSTICAS PRINCIPALES
 
 ### Gestión de Planes
-- Plan **GRATUITO** (acceso básico)
-- Plan **PREMIUM** (acceso completo)
+- Plan GRATUITO (acceso básico)
+- Plan PREMIUM (acceso completo)
 - Configuración flexible de precios
 - Activación/desactivación de planes
 
 ### Gestión de Suscripciones
 - Creación de suscripciones para usuarios
-- Estados: `PENDIENTE_PAGO`, `ACTIVA`, `CANCELADA`, `EXPIRADA`
+- Estados: PENDIENTE_PAGO, ACTIVA, CANCELADA, EXPIRADA
 - Control de períodos de facturación (mensual)
 - Cancelación al final del período o inmediata
 - Renovación automática
@@ -167,12 +168,11 @@ El sistema de suscripciones de Zabora está diseñado como un microservicio inde
 
 Antes de comenzar, asegúrate de tener instalado:
 
-- **Java JDK 17+** ([Descargar](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html))
-- **MySQL 8.0+** ([Descargar](https://dev.mysql.com/downloads/installer/))
-- **Maven 3.6+** (incluido en la mayoría de IDE)
-- **Git** ([Descargar](https://git-scm.com/))
-- **Postman** o **cURL** (opcional, para probar)
-- **Ngrok** (para pruebas locales con webhooks)
+- Java JDK 17+ (Descargar)
+- MySQL 8.0+ (Descargar)
+- Maven 3.6+ (incluido en la mayoría de IDE)
+- Git (Descargar)
+- Postman o cURL (opcional, para probar)
 
 ---
 
@@ -219,14 +219,14 @@ spring:
     name: zabora-subscription-service
   
   datasource:
-    url: jdbc:mysql://localhost:3306/zabora_subscriptions?sslMode=DISABLED&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&characterEncoding=utf8
-    username: TU_USUARIO_MYSQL    # ← Cambiar esto
-    password: TU_CONTRASEÑA_MYSQL # ← Cambiar esto
+    url: jdbc:mysql://localhost:3306/zabora_subscriptions?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
+    username: TU_USUARIO_MYSQL    # Cambiar esto
+    password: TU_CONTRASEÑA_MYSQL # Cambiar esto
     driver-class-name: com.mysql.cj.jdbc.Driver
   
   jpa:
     hibernate:
-      ddl-auto: update  # Crea/actualiza tablas automáticamente
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -249,7 +249,7 @@ mercadopago:
   
   webhook:
     secret: c4c69a70dcb99ebf7b530bfd4cd8080e49feed021d9bc56e5bd27d119b59eec5
-    # ACTUALIZAR CON LA URL DE NGROK
+    # IMPORTANTE: ACTUALIZAR CON LA URL DE NGROK
     notification-url: https://TU_SUBDOMINIO_NGROK.ngrok-free.app/api/webhooks/mercadopago
 
 # Email configuration
@@ -284,7 +284,7 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-La aplicación estará disponible en: **http://localhost:8004**
+La aplicación estará disponible en: http://localhost:8004
 
 ### 5. Verificar la Instalación
 
@@ -296,7 +296,7 @@ curl http://localhost:8004/actuator/health
 curl http://localhost:8004/api/suscripciones/planes
 ```
 
-**Respuesta esperada:**
+Respuesta esperada:
 ```json
 [
   {
@@ -317,6 +317,149 @@ curl http://localhost:8004/api/suscripciones/planes
   }
 ]
 ```
+
+---
+
+## INSTALACIÓN DE NGROK
+
+### ¿Qué es Ngrok?
+
+Ngrok es una herramienta que crea un túnel seguro desde internet a tu servidor local. Es necesaria para que MercadoPago pueda enviar notificaciones (webhooks) a tu entorno de desarrollo local.
+
+### Opción 1: Instalador de Windows
+
+#### Paso 1: Descargar Ngrok
+
+1. Ve a: https://ngrok.com/download
+2. Haz clic en "Download for Windows"
+3. Descarga el archivo `ngrok.zip`
+
+#### Paso 2: Extraer el archivo
+
+1. Descomprime `ngrok.zip`
+2. Mueve `ngrok.exe` a una carpeta permanente, por ejemplo:
+   ```
+   C:\Tools\ngrok\ngrok.exe
+   ```
+
+#### Paso 3: Agregar Ngrok al PATH (opcional pero recomendado)
+
+1. Haz clic derecho en "Este equipo" → Propiedades
+2. Haz clic en "Configuración avanzada del sistema"
+3. Haz clic en "Variables de entorno"
+4. En "Variables del sistema", selecciona `Path` → Haz clic en "Editar"
+5. Haz clic en "Nuevo" → Agrega: `C:\Tools\ngrok`
+6. Haz clic en "Aceptar" en todas las ventanas
+
+#### Paso 4: Verificar instalación
+
+Abre una terminal y ejecuta:
+```cmd
+ngrok version
+```
+
+Deberías ver algo como:
+```
+ngrok version 3.x.x
+```
+
+### Opción 2: Con Chocolatey (si lo tienes instalado)
+
+```powershell
+choco install ngrok
+```
+
+### Configuración de Ngrok
+
+#### Paso 1: Crear cuenta en Ngrok
+
+1. Ve a: https://dashboard.ngrok.com/signup
+2. Regístrate (puedes usar tu cuenta de Google/GitHub)
+3. Confirma tu email
+
+#### Paso 2: Obtener tu Authtoken
+
+1. Inicia sesión en: https://dashboard.ngrok.com
+2. Ve a la sección "Your Authtoken"
+3. Copia el token (se ve así: `2aB3cD4eF5gH6iJ7kL8mN9oP0qR1sT2uV3wX4yZ`)
+
+#### Paso 3: Configurar Authtoken en Ngrok
+
+Abre una terminal y ejecuta:
+
+```cmd
+ngrok config add-authtoken TU_TOKEN_AQUI
+```
+
+Ejemplo:
+```cmd
+ngrok config add-authtoken 2aB3cD4eF5gH6iJ7kL8mN9oP0qR1sT2uV3wX4yZ
+```
+
+Deberías ver:
+```
+Authtoken saved to configuration file: C:\Users\TuUsuario\.ngrok2\ngrok.yml
+```
+
+#### Paso 4: Iniciar Ngrok
+
+Ngrok debe apuntar a tu API Gateway (puerto 9000):
+
+```cmd
+ngrok http 9000
+```
+
+IMPORTANTE: Debes dejar esta ventana ABIERTA mientras pruebes. Si la cierras, el túnel se cierra.
+
+#### Paso 5: Verificar que funciona
+
+Deberías ver algo como esto en la consola:
+
+```
+ngrok
+
+Session Status                online
+Account                       tu_email@gmail.com (Plan: Free)
+Version                       3.5.0
+Region                        United States (us)
+Latency                       45ms
+Web Interface                 http://127.0.0.1:4040
+Forwarding                    https://abc123def456.ngrok-free.app -> http://localhost:9000
+
+Connections                   ttl     opn     rt1     rt5     p50     p90
+                              0       0       0.00    0.00    0.00    0.00
+```
+
+Copia la URL de Forwarding: `https://abc123def456.ngrok-free.app`
+
+#### Paso 6: Actualizar la configuración del Subscription Service
+
+1. Abre `src/main/resources/application.yml`
+2. Actualiza la URL de notificación con la URL de Ngrok:
+
+```yaml
+mercadopago:
+  webhook:
+    notification-url: https://abc123def456.ngrok-free.app/api/webhooks/mercadopago
+```
+
+3. Reinicia el Subscription Service (Ctrl+C y luego `mvn spring-boot:run`)
+
+#### Paso 7: Acceder a la interfaz web de Ngrok
+
+Puedes ver todas las peticiones que pasan por Ngrok en:
+
+```
+http://127.0.0.1:4040
+```
+
+Esto es muy útil para depurar si los webhooks están llegando correctamente.
+
+### Nota importante sobre Ngrok Free
+
+En el plan gratuito de Ngrok, cada vez que reinicias el túnel, la URL cambia. Debes actualizar la `notification-url` en `application.yml` y en la configuración del webhook en MercadoPago cada vez que esto ocurra.
+
+Para evitar esto, considera el plan de pago de Ngrok que ofrece URLs fijas.
 
 ---
 
@@ -359,7 +502,7 @@ curl http://localhost:8004/api/suscripciones/planes
 
 ### Tablas Principales
 
-#### `planes_suscripcion` - Planes disponibles
+#### planes_suscripcion - Planes disponibles
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -370,14 +513,14 @@ curl http://localhost:8004/api/suscripciones/planes
 | moneda | VARCHAR(3) | Moneda (COP, USD, etc.) |
 | activo | BOOLEAN | Si el plan está disponible |
 
-**Datos predefinidos:**
+Datos predefinidos:
 
 | ID | nombre | precio | moneda |
 |----|--------|--------|--------|
 | 1 | gratuito | 0.00 | COP |
 | 2 | premium | 29900.00 | COP |
 
-#### `suscripciones_usuarios` - Suscripciones de usuarios
+#### suscripciones_usuarios - Suscripciones de usuarios
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -390,7 +533,7 @@ curl http://localhost:8004/api/suscripciones/planes
 | cancelar_al_final_periodo | BOOLEAN | Si se cancelará al final del período |
 | fecha_creacion | DATETIME | Fecha de creación |
 
-#### `pagos` - Historial de pagos
+#### pagos - Historial de pagos
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -405,7 +548,7 @@ curl http://localhost:8004/api/suscripciones/planes
 | fecha_pago | DATETIME | Fecha en que se completó el pago |
 | fecha_creacion | DATETIME | Fecha de creación |
 
-#### `logs_suscripciones` - Auditoría
+#### logs_suscripciones - Auditoría
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -446,7 +589,7 @@ http://localhost:9000/api/webhooks
 GET /api/suscripciones/planes
 ```
 
-**Respuesta Exitosa:**
+Respuesta Exitosa:
 ```json
 [
   {
@@ -474,12 +617,12 @@ GET /api/suscripciones/planes
 GET /api/suscripciones/planes/{id}
 ```
 
-**Ejemplo:**
+Ejemplo:
 ```
 GET /api/suscripciones/planes/2
 ```
 
-**Respuesta:**
+Respuesta:
 ```json
 {
   "id": 2,
@@ -503,7 +646,7 @@ Content-Type: application/json
 Headers: X-User-Id: {userId}
 ```
 
-**Cuerpo de la solicitud:**
+Cuerpo de la solicitud:
 ```json
 {
   "planId": 2,
@@ -511,7 +654,7 @@ Headers: X-User-Id: {userId}
 }
 ```
 
-**Respuesta Exitosa (Plan Premium - requiere pago):**
+Respuesta Exitosa (Plan Premium - requiere pago):
 ```json
 {
   "requierePago": true,
@@ -520,7 +663,7 @@ Headers: X-User-Id: {userId}
 }
 ```
 
-**Respuesta Exitosa (Plan Gratuito - no requiere pago):**
+Respuesta Exitosa (Plan Gratuito - no requiere pago):
 ```json
 {
   "requierePago": false,
@@ -536,7 +679,7 @@ GET /api/suscripciones/estado
 Headers: X-User-Id: {userId}
 ```
 
-**Respuesta Exitosa:**
+Respuesta Exitosa:
 ```json
 {
   "id": "sub_abc123def456",
@@ -557,7 +700,7 @@ GET /api/suscripciones/historial
 Headers: X-User-Id: {userId}
 ```
 
-**Respuesta Exitosa:**
+Respuesta Exitosa:
 ```json
 [
   {
@@ -585,14 +728,14 @@ Content-Type: application/json
 Headers: X-User-Id: {userId}
 ```
 
-**Cuerpo de la solicitud:**
+Cuerpo de la solicitud:
 ```json
 {
   "tipoCancelacion": "FIN_PERIODO"  // o "INMEDIATA"
 }
 ```
 
-**Respuesta Exitosa (Cancelación al final del período):**
+Respuesta Exitosa (Cancelación al final del período):
 ```json
 {
   "mensaje": "La suscripción se cancelará al final del período actual (2026-04-17)",
@@ -601,7 +744,7 @@ Headers: X-User-Id: {userId}
 }
 ```
 
-**Respuesta Exitosa (Cancelación inmediata):**
+Respuesta Exitosa (Cancelación inmediata):
 ```json
 {
   "mensaje": "Suscripción cancelada inmediatamente",
@@ -622,7 +765,7 @@ Content-Type: application/json
 Headers: X-User-Id: {userId}, X-User-Email: {email}
 ```
 
-**Cuerpo de la solicitud:**
+Cuerpo de la solicitud:
 ```json
 {
   "suscripcionId": "sub_abc123def456",
@@ -630,7 +773,7 @@ Headers: X-User-Id: {userId}, X-User-Email: {email}
 }
 ```
 
-**Respuesta Exitosa:**
+Respuesta Exitosa:
 ```json
 {
   "id": "123456789-abcdef",
@@ -646,7 +789,7 @@ GET /api/pagos/historial
 Headers: X-User-Id: {userId}
 ```
 
-**Respuesta Exitosa:**
+Respuesta Exitosa:
 ```json
 [
   {
@@ -672,7 +815,7 @@ POST /api/webhooks/mercadopago
 Content-Type: application/json
 ```
 
-**Payload recibido de MercadoPago:**
+Payload recibido de MercadoPago:
 ```json
 {
   "action": "payment.updated",
@@ -688,12 +831,12 @@ Content-Type: application/json
 }
 ```
 
-**Respuesta Exitosa:**
+Respuesta Exitosa:
 ```
 200 OK
 ```
 
-**Procesamiento interno:**
+Procesamiento interno:
 1. Recibe webhook con payment ID
 2. Consulta estado del pago en MercadoPago
 3. Si estado = "approved", actualiza pago y activa suscripción
@@ -702,58 +845,125 @@ Content-Type: application/json
 
 ---
 
+## INTEGRACIÓN CON MERCADOPAGO
+
+### Credenciales de PRUEBA (Testing)
+
+| Campo | Valor |
+|-------|-------|
+| Public Key (TEST) | `TEST-01677c07-6b61-4718-9d81-78123be19879` |
+| Access Token (TEST) | `TEST-6541386271619-022410-5b4025c5ab0255f05846d51533694260-3223648585` |
+| Webhook Secret | `c4c69a70dcb99ebf7b530bfd4cd8080e49feed021d9bc56e5bd27d119b59eec5` |
+
+### Credenciales de PRODUCCIÓN
+
+| Campo | Valor |
+|-------|-------|
+| Public Key (PROD) | `APP_USR-46460ebc-eb77-4630-a699-42155e7b3df4` |
+| Access Token (PROD) | `APP_USR-8754802509768642-022816-29928cef3f32a3600cd6098f87947575-3233058352` |
+| Webhook Secret | `c4c69a70dcb99ebf7b530bfd4cd8080e49feed021d9bc56e5bd27d119b59eec5` |
+
+### Configuración de Webhook en MercadoPago
+
+#### Paso 1: Acceder al Panel de MercadoPago
+
+1. Ve a: https://www.mercadopago.com.co/developers/panel
+2. Inicia sesión con tu cuenta de vendedor
+
+#### Paso 2: Ir a Webhooks
+
+1. En el menú lateral, haz clic en "Webhooks"
+2. O ve directamente a: https://www.mercadopago.com.co/developers/panel/webhooks
+
+#### Paso 3: Crear un Webhook para Payments
+
+1. Haz clic en "Crear webhook" o "+ Agregar"
+2. Tipo: Payments (Pagos)
+3. Configura la URL:
+   ```
+   https://TU_SUBDOMINIO_NGROK.ngrok-free.app/api/webhooks/mercadopago
+   ```
+4. Eventos a escuchar:
+   - payment.created
+   - payment.updated
+5. Haz clic en "Guardar"
+
+### Cuentas de Prueba de MercadoPago
+
+#### Comprador (Buyer):
+- User ID: 3228610948
+- Password: ODfKavGULP
+
+#### Vendedor (Seller):
+- User ID: 3233058352
+- Password: P97mgkJIPd
+
+#### Tarjeta de Prueba:
+- Número: 5031 7557 3453 0604
+- CVV: 123
+- Fecha de expiración: 11/25
+- Nombre: APRO
+
+Más tarjetas de prueba: https://www.mercadopago.com.co/developers/es/docs/checkout-pro/additional-content/test-cards
+
+---
+
 ## FLUJO COMPLETO DE PAGO
 
-### Paso a Paso con Diagrama
+### Paso a Paso
 
 ```
-┌────────────┐     ┌────────────┐     ┌────────────┐     ┌────────────┐
-│  USUARIO   │────▶│   FRONTEND │────▶│ API GATEWAY│────▶│   AUTH     │
-│ (Angular)  │     │  (4200)    │     │  (9000)    │     │  (8000)    │
-└────────────┘     └────────────┘     └────────────┘     └────────────┘
-       │                  │                  │                  │
-       │                  │                  │                  │
-       ▼                  ▼                  ▼                  ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                          FLUJO DE PAGO                               │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  1. Usuario hace clic en "Adquirir Premium"                          │
-│     → POST /api/suscripciones/suscribir                             │
-│     → Crea suscripción con estado PENDIENTE_PAGO                    │
-│                                                                      │
-│  2. Frontend recibe: { requierePago: true, idSuscripcion: "sub_..."}│
-│     → POST /api/pagos/crear-preferencia                             │
-│     → Crea preferencia en MercadoPago                               │
-│     → Retorna initPoint (URL de pago)                               │
-│                                                                      │
-│  3. Frontend redirige a MercadoPago                                 │
-│     → Usuario ingresa datos de tarjeta                              │
-│     → Completa el pago                                              │
-│                                                                      │
-│  4. MercadoPago redirige a: http://localhost:4200/home?payment=success│
-│     → Frontend muestra mensaje de éxito                             │
-│                                                                      │
-│  5. MercadoPago envía webhook a:                                    │
-│     → https://ngrok-url/api/webhooks/mercadopago                    │
-│     → Contiene payment ID                                           │
-│                                                                      │
-│  6. Subscription Service recibe webhook:                            │
-│     → Consulta estado del pago en MercadoPago                       │
-│     → Si estado = "approved":                                       │
-│         - Actualiza pago a COMPLETADO                               │
-│         - Actualiza suscripción a ACTIVA                            │
-│         - Llama a Auth Service: /api/upgrade/premium/{userId}       │
-│                                                                      │
-│  7. Auth Service actualiza usuario:                                 │
-│     → tipo_usuario = 2 (PREMIUM)                                    │
-│     → fecha_inicio_premium = NOW()                                  │
-│                                                                      │
-│  8. Usuario refresca /mi-suscripcion:                               │
-│     → GET /api/suscripciones/estado                                 │
-│     → Muestra: Plan PREMIUM, estado ACTIVA                          │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
+1. USUARIO (Frontend)
+   ↓
+   POST /api/suscripciones/suscribir
+   ↓
+2. API GATEWAY (9000)
+   ↓ (valida JWT)
+   ↓ (añade headers: X-User-Id, X-User-Email)
+   ↓
+3. SUBSCRIPTION SERVICE (8004)
+   ↓ Crea suscripción con estado PENDIENTE_PAGO
+   ↓ Retorna: { requierePago: true, idSuscripcion: "sub_..." }
+   ↓
+4. USUARIO (Frontend)
+   ↓
+   POST /api/pagos/crear-preferencia
+   ↓
+5. API GATEWAY → SUBSCRIPTION SERVICE
+   ↓ Crea preferencia en MercadoPago
+   ↓ Retorna: { initPoint: "https://mercadopago.com/checkout/..." }
+   ↓
+6. USUARIO (Frontend)
+   ↓ Redirige a: initPoint (MercadoPago)
+   ↓
+7. USUARIO completa el pago en MercadoPago
+   ↓
+8. MERCADOPAGO
+   ↓ Redirige a: http://localhost:4200/home?payment=success
+   ↓ Envía webhook a: https://abc123.ngrok-free.app/api/webhooks/mercadopago
+   ↓
+9. NGROK TUNNEL
+   ↓ Redirige a: http://localhost:9000/api/webhooks/mercadopago
+   ↓
+10. API GATEWAY (9000)
+    ↓ (permite paso sin JWT porque es ruta pública)
+    ↓
+11. SUBSCRIPTION SERVICE (8004)
+    ↓ Recibe webhook
+    ↓ Consulta pago en MercadoPago API
+    ↓ Si status = "approved":
+    ↓   - Actualiza pago: PENDIENTE → COMPLETADO
+    ↓   - Actualiza suscripción: PENDIENTE_PAGO → ACTIVA
+    ↓   - Llama a Auth Service:
+    ↓
+12. AUTH SERVICE (8000)
+    ↓ POST /api/upgrade/premium/{userId}
+    ↓ Actualiza: tipo_usuario = 2 (PREMIUM)
+    ↓ Actualiza: fecha_inicio_premium = NOW()
+    ↓
+13. USUARIO (Frontend)
+    ↓ Consulta estado: GET /api/suscripciones/estado
+    ↓ Muestra: Plan PREMIUM, estado ACTIVA
 ```
 
 ---
@@ -780,7 +990,7 @@ curl -X POST http://localhost:9000/api/suscripciones/suscribir \
   }'
 ```
 
-**Respuesta:**
+Respuesta:
 ```json
 {
   "requierePago": true,
@@ -802,7 +1012,7 @@ curl -X POST http://localhost:9000/api/pagos/crear-preferencia \
   }'
 ```
 
-**Respuesta:**
+Respuesta:
 ```json
 {
   "id": "123456789-abcdef",
@@ -816,7 +1026,7 @@ curl -X POST http://localhost:9000/api/pagos/crear-preferencia \
 curl -H "X-User-Id: 1" http://localhost:9000/api/suscripciones/estado
 ```
 
-**Respuesta después del webhook:**
+Respuesta después del webhook:
 ```json
 {
   "id": "sub_abc123def456",
@@ -829,8 +1039,6 @@ curl -H "X-User-Id: 1" http://localhost:9000/api/suscripciones/estado
   "cancelarAlFinalPeriodo": false
 }
 ```
-
----
 
 ### Ejemplo 2: Usuario cancela suscripción
 
@@ -845,7 +1053,7 @@ curl -X POST http://localhost:9000/api/suscripciones/cancelar/sub_abc123def456 \
   }'
 ```
 
-**Respuesta:**
+Respuesta:
 ```json
 {
   "mensaje": "La suscripción se cancelará al final del período actual (2026-04-17)",
@@ -860,7 +1068,7 @@ curl -X POST http://localhost:9000/api/suscripciones/cancelar/sub_abc123def456 \
 curl -H "X-User-Id: 1" http://localhost:9000/api/suscripciones/estado
 ```
 
-**Respuesta:**
+Respuesta:
 ```json
 {
   "id": "sub_abc123def456",
@@ -880,22 +1088,22 @@ curl -H "X-User-Id: 1" http://localhost:9000/api/suscripciones/estado
 
 ### Colección de Postman
 
-#### 1. Endpoints de Planes
-- [ ] `GET /api/suscripciones/planes` - Listar todos los planes
-- [ ] `GET /api/suscripciones/planes/{id}` - Obtener plan por ID
+#### Endpoints de Planes
+- GET /api/suscripciones/planes - Listar todos los planes
+- GET /api/suscripciones/planes/{id} - Obtener plan por ID
 
-#### 2. Endpoints de Suscripciones
-- [ ] `POST /api/suscripciones/suscribir` - Crear suscripción
-- [ ] `GET /api/suscripciones/estado` - Estado de suscripción actual
-- [ ] `GET /api/suscripciones/historial` - Historial de suscripciones
-- [ ] `POST /api/suscripciones/cancelar/{id}` - Cancelar suscripción
+#### Endpoints de Suscripciones
+- POST /api/suscripciones/suscribir - Crear suscripción
+- GET /api/suscripciones/estado - Estado de suscripción actual
+- GET /api/suscripciones/historial - Historial de suscripciones
+- POST /api/suscripciones/cancelar/{id} - Cancelar suscripción
 
-#### 3. Endpoints de Pagos
-- [ ] `POST /api/pagos/crear-preferencia` - Crear preferencia de pago
-- [ ] `GET /api/pagos/historial` - Historial de pagos
+#### Endpoints de Pagos
+- POST /api/pagos/crear-preferencia - Crear preferencia de pago
+- GET /api/pagos/historial - Historial de pagos
 
-#### 4. Webhook (simulado)
-- [ ] `POST /api/webhooks/mercadopago` - Simular webhook
+#### Webhook (simulado)
+- POST /api/webhooks/mercadopago - Simular webhook
 
 ### Pruebas con cURL
 
@@ -939,9 +1147,9 @@ curl -X POST http://localhost:9000/api/webhooks/mercadopago \
 
 ### Problema 1: "Error al crear suscripción: Usuario no encontrado"
 
-**Causa:** El header `X-User-Id` no se está enviando o el ID no existe
+Causa: El header X-User-Id no se está enviando o el ID no existe
 
-**Solución:**
+Solución:
 ```bash
 # Verificar que el header se envía correctamente
 curl -H "X-User-Id: 1" http://localhost:9000/api/suscripciones/estado
@@ -952,27 +1160,26 @@ curl http://localhost:8000/api/auth/profile -H "Authorization: Bearer {token}"
 
 ### Problema 2: "El pago no se procesa después del webhook"
 
-**Causa:** La URL de webhook en MercadoPago no coincide con la de Ngrok
+Causa: La URL de webhook en MercadoPago no coincide con la de Ngrok
 
-**Solución:**
+Solución:
 1. Verificar URL actual de Ngrok:
    ```bash
    # Ver en consola de Ngrok
    Forwarding: https://abc123.ngrok-free.app -> http://localhost:9000
    ```
-
-2. Actualizar `application.yml`:
+2. Actualizar application.yml:
    ```yaml
    notification-url: https://abc123.ngrok-free.app/api/webhooks/mercadopago
    ```
-
 3. Reiniciar Subscription Service
+4. Actualizar webhook en panel de MercadoPago
 
 ### Problema 3: "No se actualiza el rol en Auth Service"
 
-**Causa:** Feign Client no puede conectarse a Auth Service
+Causa: Feign Client no puede conectarse a Auth Service
 
-**Solución:**
+Solución:
 ```bash
 # Verificar que Auth Service está corriendo
 curl http://localhost:8000/actuator/health
@@ -983,9 +1190,9 @@ curl http://localhost:8000/actuator/health
 
 ### Problema 4: "La suscripción queda en PENDIENTE_PAGO para siempre"
 
-**Causa:** El webhook no llega o no se procesa correctamente
+Causa: El webhook no llega o no se procesa correctamente
 
-**Solución:**
+Solución:
 ```bash
 # 1. Verificar que Ngrok está corriendo
 # 2. Verificar que el webhook está configurado en MercadoPago
@@ -998,26 +1205,76 @@ curl -X POST http://localhost:9000/api/webhooks/mercadopago \
 
 ### Problema 5: "Error: Plan no encontrado"
 
-**Causa:** El `planId` enviado no existe (debe ser 1 o 2)
+Causa: El planId enviado no existe (debe ser 1 o 2)
 
-**Solución:**
+Solución:
 ```bash
 # Verificar planes disponibles
 curl http://localhost:9000/api/suscripciones/planes
 # Plan IDs: 1 (gratuito), 2 (premium)
 ```
 
-### Problema 6: "Error al crear preferencia: Acces token inválido"
+### Problema 6: "Error al crear preferencia: Access token inválido"
 
-**Causa:** Credenciales de MercadoPago incorrectas
+Causa: Credenciales de MercadoPago incorrectas
 
-**Solución:**
+Solución:
 ```bash
 # Verificar que las credenciales en application.yml son correctas
 mercadopago:
   access-token: TEST-... (comienza con TEST- para pruebas)
   public-key: TEST-...
 ```
+
+### Problema 7: Ngrok dice "command not found"
+
+Causa: Ngrok no está en el PATH o no está instalado
+
+Solución:
+```bash
+# Opción A: Ejecutar con la ruta completa
+C:\Tools\ngrok\ngrok.exe http 9000
+
+# Opción B: Agregar al PATH
+# 1. Buscar "Variables de entorno" en Windows
+# 2. Editar Path y agregar C:\Tools\ngrok
+# 3. Reiniciar terminal
+```
+
+### Problema 8: "Session Expired" en Ngrok
+
+Causa: El token de Ngrok expiró o no está configurado
+
+Solución:
+```bash
+# 1. Obtén un nuevo token en https://dashboard.ngrok.com
+# 2. Reconfigura el token
+ngrok config add-authtoken TU_NUEVO_TOKEN
+```
+
+### Problema 9: Ngrok Web Interface (4040) no abre
+
+Causa: Ngrok no está corriendo o puerto 4040 ocupado
+
+Solución:
+```bash
+# Verificar que Ngrok esté corriendo
+# Si el puerto está ocupado, usar otro:
+ngrok http 9000 --web-addr=localhost:4041
+# Luego ir a: http://127.0.0.1:4041
+```
+
+### Problema 10: "ERR_NGROK_3200"
+
+Causa: Ngrok Free plan tiene límite de conexiones o tiempo
+
+Solución:
+1. Cierra Ngrok (Ctrl+C)
+2. Vuelve a iniciar:
+   ```bash
+   ngrok http 9000
+   ```
+3. Importante: La URL cambiará, actualiza application.yml y el webhook en MercadoPago
 
 ---
 
@@ -1108,8 +1365,14 @@ Rol PREMIUM actualizado en auth-service
 cd C:\ZaboraServices\Zabora-Suscrip
 mvn spring-boot:run
 
-# Ver logs en tiempo real
-tail -f logs/application.log
+# Iniciar Ngrok
+ngrok http 9000
+
+# Ver Web Interface de Ngrok
+start http://127.0.0.1:4040
+
+# Configurar nuevo token de Ngrok
+ngrok config add-authtoken TU_TOKEN
 
 # Verificar estado del servicio
 curl http://localhost:8004/actuator/health
@@ -1139,10 +1402,10 @@ curl -X POST http://localhost:9000/api/webhooks/mercadopago \
 
 ## CONSIDERACIONES DE SEGURIDAD
 
-1. **Headers de autenticación:** El API Gateway inyecta `X-User-Id` y `X-User-Email` desde el JWT
-2. **Validación de permisos:** Los usuarios solo pueden ver/modificar sus propias suscripciones
-3. **Webhooks seguros:** Validación de origen mediante secreto compartido
-4. **HTTPS en producción:** Siempre usar HTTPS para comunicación externa
+1. Headers de autenticación: El API Gateway inyecta X-User-Id y X-User-Email desde el JWT
+2. Validación de permisos: Los usuarios solo pueden ver/modificar sus propias suscripciones
+3. Webhooks seguros: Validación de origen mediante secreto compartido
+4. HTTPS en producción: Siempre usar HTTPS para comunicación externa
 
 ---
 
@@ -1169,11 +1432,11 @@ mercadopago:
 
 ---
 
-##  RECURSOS ADICIONALES
+## RECURSOS ADICIONALES
 
-- **Documentación MercadoPago:** https://www.mercadopago.com.co/developers
-- **Spring Boot:** https://spring.io/projects/spring-boot
-- **Feign Client:** https://cloud.spring.io/spring-cloud-openfeign/
+- Documentación MercadoPago: https://www.mercadopago.com.co/developers
+- Spring Boot: https://spring.io/projects/spring-boot
+- Feign Client: https://cloud.spring.io/spring-cloud-openfeign/
+- Ngrok: https://ngrok.com/docs
+
 ---
-
-**¿Necesitas ayuda?** Revisa la sección de [Solución de Problemas](#solución-de-problemas) o contacta al equipo de desarrollo. 🚀
