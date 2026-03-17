@@ -402,10 +402,10 @@ Authtoken saved to configuration file: C:\Users\TuUsuario\.ngrok2\ngrok.yml
 
 #### Paso 4: Iniciar Ngrok
 
-Ngrok debe apuntar a tu API Gateway (puerto 9000):
+Ngrok debe apuntar a tu API Suscription-Service (puerto 8004):
 
 ```cmd
-ngrok http 9000
+ngrok http 8004
 ```
 
 IMPORTANTE: Debes dejar esta ventana ABIERTA mientras pruebes. Si la cierras, el túnel se cierra.
