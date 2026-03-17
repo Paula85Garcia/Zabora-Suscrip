@@ -1,6 +1,5 @@
 # GUÍA COMPLETA: SISTEMA DE SUSCRIPCIONES ZABORA
 
-Esta guía te ayudará a entender y configurar el sistema de suscripciones de Zabora, siguiendo el mismo formato detallado del ejemplo de recetas.
 
 ---
 
