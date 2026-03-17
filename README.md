@@ -1,10 +1,10 @@
-# 📋 GUÍA COMPLETA: SISTEMA DE SUSCRIPCIONES ZABORA
+# GUÍA COMPLETA: SISTEMA DE SUSCRIPCIONES ZABORA
 
-Esta guía te ayudará a entender y configurar el sistema de suscripciones de Zabora, siguiendo el mismo formato detallado del ejemplo de recetas.
+Esta guía te ayudará a entender y configurar el sistema de suscripciones de Zabora.
 
 ---
 
-## 📑 TABLA DE CONTENIDOS
+## TABLA DE CONTENIDOS
 
 1. [Arquitectura del Sistema de Suscripciones](#arquitectura-del-sistema-de-suscripciones)
 2. [Pila Tecnológica](#pila-tecnológica)
@@ -24,7 +24,7 @@ Esta guía te ayudará a entender y configurar el sistema de suscripciones de Za
 
 ---
 
-## 🏗️ ARQUITECTURA DEL SISTEMA DE SUSCRIPCIONES
+## ARQUITECTURA DEL SISTEMA DE SUSCRIPCIONES
 
 ### **Visión General**
 
@@ -109,7 +109,7 @@ El sistema de suscripciones de Zabora está diseñado como un microservicio inde
 
 ---
 
-## 🛠️ PILA TECNOLÓGICA
+## PILA TECNOLÓGICA
 
 | Tecnología | Versión | Propósito |
 |------------|---------|-----------|
@@ -125,45 +125,45 @@ El sistema de suscripciones de Zabora está diseñado como un microservicio inde
 
 ---
 
-## ✨ CARACTERÍSTICAS PRINCIPALES
+## CARACTERÍSTICAS PRINCIPALES
 
-### 💳 Gestión de Planes
+### Gestión de Planes
 - Plan **GRATUITO** (acceso básico)
 - Plan **PREMIUM** (acceso completo)
 - Configuración flexible de precios
 - Activación/desactivación de planes
 
-### 📋 Gestión de Suscripciones
+### Gestión de Suscripciones
 - Creación de suscripciones para usuarios
 - Estados: `PENDIENTE_PAGO`, `ACTIVA`, `CANCELADA`, `EXPIRADA`
 - Control de períodos de facturación (mensual)
 - Cancelación al final del período o inmediata
 - Renovación automática
 
-### 💰 Integración con MercadoPago
+### Integración con MercadoPago
 - Creación de preferencias de pago
 - Procesamiento de webhooks
 - Verificación de estado de pagos
 - Soporte para múltiples métodos de pago
 
-### 🔄 Comunicación con Auth Service
+### Comunicación con Auth Service
 - Feign Client para comunicación síncrona
 - Actualización automática de roles de usuario
 - Manejo de errores y reintentos
 
-### 📧 Notificaciones por Email
+### Notificaciones por Email
 - Confirmación de pago exitoso
 - Activación de suscripción
 - Cancelación de suscripción
 
-### 📊 Logging y Auditoría
+### Logging y Auditoría
 - Logs detallados de todas las operaciones
 - Trazabilidad de cambios en suscripciones
 - Registro de webhooks recibidos
 
 ---
 
-## 📋 REQUISITOS PREVIOS
+## REQUISITOS PREVIOS
 
 Antes de comenzar, asegúrate de tener instalado:
 
@@ -176,7 +176,7 @@ Antes de comenzar, asegúrate de tener instalado:
 
 ---
 
-## 🔧 INSTALACIÓN Y CONFIGURACIÓN
+## INSTALACIÓN Y CONFIGURACIÓN
 
 ### 1. Clonar el Repositorio
 
@@ -237,19 +237,19 @@ spring:
 # MERCADOPAGO CONFIGURATION
 # ========================================
 mercadopago:
-  # ⚠️ Credenciales de PRUEBA (Testing)
+  # Credenciales de PRUEBA (Testing)
   access-token: TEST-6541386271619-022410-5b4025c5ab0255f05846d51533694260-3223648585
   public-key: TEST-01677c07-6b61-4718-9d81-78123be19879
   environment: test
   
-  # ⚠️ URLs de redirección (Frontend Angular)
+  # URLs de redirección (Frontend Angular)
   success-url: http://localhost:4200/home?payment=success
   failure-url: http://localhost:4200/home?payment=failure
   pending-url: http://localhost:4200/home?payment=pending
   
   webhook:
     secret: c4c69a70dcb99ebf7b530bfd4cd8080e49feed021d9bc56e5bd27d119b59eec5
-    # ⚠️ ACTUALIZAR CON LA URL DE NGROK
+    # ACTUALIZAR CON LA URL DE NGROK
     notification-url: https://TU_SUBDOMINIO_NGROK.ngrok-free.app/api/webhooks/mercadopago
 
 # Email configuration
@@ -320,7 +320,7 @@ curl http://localhost:8004/api/suscripciones/planes
 
 ---
 
-## 🗄️ ESTRUCTURA DE LA BASE DE DATOS
+## ESTRUCTURA DE LA BASE DE DATOS
 
 ### Diagrama de Relaciones
 
@@ -420,7 +420,7 @@ curl http://localhost:8004/api/suscripciones/planes
 
 ---
 
-## 📡 ENDPOINTS DE LA API
+## ENDPOINTS DE LA API
 
 ### URL Base
 
@@ -438,7 +438,7 @@ http://localhost:9000/api/webhooks
 
 ---
 
-## 📋 PLANES
+## PLANES
 
 ### Obtener Todos los Planes
 
@@ -493,7 +493,7 @@ GET /api/suscripciones/planes/2
 
 ---
 
-## 📋 SUSCRIPCIONES
+## SUSCRIPCIONES
 
 ### Crear Suscripción
 
@@ -612,7 +612,7 @@ Headers: X-User-Id: {userId}
 
 ---
 
-## 💰 PAGOS
+## PAGOS
 
 ### Crear Preferencia de Pago
 
@@ -663,7 +663,7 @@ Headers: X-User-Id: {userId}
 
 ---
 
-## 🔔 WEBHOOKS
+## WEBHOOKS
 
 ### Webhook de MercadoPago
 
@@ -702,7 +702,7 @@ Content-Type: application/json
 
 ---
 
-## 🔄 FLUJO COMPLETO DE PAGO
+## FLUJO COMPLETO DE PAGO
 
 ### Paso a Paso con Diagrama
 
@@ -758,7 +758,7 @@ Content-Type: application/json
 
 ---
 
-## 📝 EJEMPLOS DE USO
+## EJEMPLOS DE USO
 
 ### Ejemplo 1: Usuario se suscribe a Premium
 
@@ -876,7 +876,7 @@ curl -H "X-User-Id: 1" http://localhost:9000/api/suscripciones/estado
 
 ---
 
-## 🧪 PRUEBAS
+## PRUEBAS
 
 ### Colección de Postman
 
@@ -935,7 +935,7 @@ curl -X POST http://localhost:9000/api/webhooks/mercadopago \
 
 ---
 
-## 🐛 SOLUCIÓN DE PROBLEMAS
+## SOLUCIÓN DE PROBLEMAS
 
 ### Problema 1: "Error al crear suscripción: Usuario no encontrado"
 
@@ -1021,7 +1021,7 @@ mercadopago:
 
 ---
 
-## 📊 LOGS Y DEPURACIÓN
+## LOGS Y DEPURACIÓN
 
 ### Niveles de Log Recomendados
 
@@ -1101,7 +1101,7 @@ Rol PREMIUM actualizado en auth-service
 
 ---
 
-## 📌 COMANDOS ÚTILES DE REFERENCIA
+## COMANDOS ÚTILES DE REFERENCIA
 
 ```bash
 # Iniciar Subscription Service
@@ -1137,7 +1137,7 @@ curl -X POST http://localhost:9000/api/webhooks/mercadopago \
 
 ---
 
-## 🔐 CONSIDERACIONES DE SEGURIDAD
+## CONSIDERACIONES DE SEGURIDAD
 
 1. **Headers de autenticación:** El API Gateway inyecta `X-User-Id` y `X-User-Email` desde el JWT
 2. **Validación de permisos:** Los usuarios solo pueden ver/modificar sus propias suscripciones
@@ -1146,7 +1146,7 @@ curl -X POST http://localhost:9000/api/webhooks/mercadopago \
 
 ---
 
-## 🚀 DESPLIEGUE EN PRODUCCIÓN
+## DESPLIEGUE EN PRODUCCIÓN
 
 ### Configuración para Producción
 
@@ -1169,7 +1169,7 @@ mercadopago:
 
 ---
 
-## 📚 RECURSOS ADICIONALES
+##  RECURSOS ADICIONALES
 
 - **Documentación MercadoPago:** https://www.mercadopago.com.co/developers
 - **Spring Boot:** https://spring.io/projects/spring-boot
