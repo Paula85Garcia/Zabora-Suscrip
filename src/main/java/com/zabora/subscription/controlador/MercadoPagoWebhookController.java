@@ -23,6 +23,7 @@ import com.zabora.subscription.modelo.enumeracion.EstadoSuscripcion;
 import com.zabora.subscription.repositorio.AuthClient;
 import com.zabora.subscription.repositorio.PagoRepositorio;
 import com.zabora.subscription.repositorio.UsuarioSuscripcionRepositorio;
+import com.zabora.subscription.servicio.EmailService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,16 +37,15 @@ public class MercadoPagoWebhookController {
     private final PagoRepositorio pagoRepositorio;
     private final UsuarioSuscripcionRepositorio suscripcionRepositorio;
     private final AuthClient authClient;
-
+     private final EmailService emailService;
+     
     @PostMapping
     public ResponseEntity<String> recibirWebhook(
             @RequestBody Map<String, Object> payload,
             @RequestParam(required = false) Map<String, String> params
     ) {
         try {
-            log.info("═══════════════════════════════════════");
             log.info("WEBHOOK RECIBIDO DE MERCADOPAGO");
-            log.info("═══════════════════════════════════════");
             log.info("Payload: {}", payload);
 
             String type = (String) payload.get("type");
@@ -79,9 +79,7 @@ public class MercadoPagoWebhookController {
             PaymentClient client = new PaymentClient();
             Payment payment = client.get(paymentId);
 
-            log.info("═══════════════════════════════════════");
             log.info("DETALLES DEL PAGO");
-            log.info("═══════════════════════════════════════");
             log.info("ID: {}", payment.getId());
             log.info("Status: {}", payment.getStatus());
             log.info("Amount: {}", payment.getTransactionAmount());
@@ -89,7 +87,7 @@ public class MercadoPagoWebhookController {
            Map<String, Object> metadata = payment.getMetadata();
 String suscripcionId = (String) metadata.get("suscripcion_id");
 
-// ✅ CORREGIDO: Maneja Integer, Double y String
+// Maneja Integer, Double y String
 Object usuarioIdObj = metadata.get("usuario_id");
 Integer usuarioId = null;
 

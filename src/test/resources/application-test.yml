@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        
+  h2:
+    console:
+      enabled: true
+
+# Configuración de MercadoPago para tests
+mercadopago:
+  access-token: TEST_ACCESS_TOKEN
+  public-key: TEST_PUBLIC_KEY
+  environment: test
+  success-url: http://localhost:8080/success
+  failure-url: http://localhost:8080/failure
+  pending-url: http://localhost:8080/pending
+  webhook:
+    notification-url: http://localhost:8080/api/webhooks/mercadopago
+
+logging:
+  level:
+    com.zabora: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG

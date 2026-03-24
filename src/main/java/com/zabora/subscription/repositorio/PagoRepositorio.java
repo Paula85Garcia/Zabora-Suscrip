@@ -24,4 +24,6 @@ public interface PagoRepositorio extends JpaRepository<Pago, String> {
     List<Pago> findByUsuarioIdAndEstado(Integer usuarioId, EstadoPago estado);
     
     long countByUsuarioIdAndEstado(Integer usuarioId, EstadoPago estado);
-}
+
+long countByEstado(EstadoPago estado);
+List<Pago> findBySuscripcionIdOrderByFechaCreacionDesc(String suscripcionId);}

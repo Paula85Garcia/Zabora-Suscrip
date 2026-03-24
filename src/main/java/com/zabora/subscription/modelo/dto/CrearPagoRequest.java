@@ -2,9 +2,10 @@ package com.zabora.subscription.modelo.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import lombok.Builder;
 import lombok.Data;
 import java.math.BigDecimal;
-
+@Builder
 @Data
 public class CrearPagoRequest {
     

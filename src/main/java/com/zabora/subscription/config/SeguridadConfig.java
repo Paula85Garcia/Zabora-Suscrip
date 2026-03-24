@@ -7,6 +7,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.zabora.subscription.data.UserContextFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,7 +18,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SeguridadConfig {
     
-    
+    private final UserContextFilter userContextFilter;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -26,12 +30,21 @@ public class SeguridadConfig {
             .authorizeHttpRequests(authz -> authz
                 
                 
-                // // Planes (lectura pública)
+                // Endpoints públicos (sin autenticación)
                  .requestMatchers("/api/suscripciones/planes").permitAll()
+                 .requestMatchers("/api/pagos/bricks/public-key").permitAll()
+
                 
+
+
                 // Webhooks de 
-                .requestMatchers("/api/webhooks/**").permitAll()
-                
+                       // .requestMatchers("/api/webhooks/**").permitAll()
+                       // .requestMatchers("/api/pagos/bricks/public-key").permitAll()
+                        //.requestMatchers("/api/pagos/bricks/public-key").permitAll()
+                        //.requestMatchers("/api/admin/**").hasRole("ADMIN")
+                //.anyRequest().authenticated()
+            
+
                 // Swagger/OpenAPI
                 .requestMatchers(
                     "/swagger-ui/**",
@@ -54,8 +67,12 @@ public class SeguridadConfig {
                 .anyRequest().permitAll()
             );
             
+        // Agregar UserContextFilter antes del filtro de autenticación
+        http.addFilterBefore(userContextFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
+
+        
     }
     
     

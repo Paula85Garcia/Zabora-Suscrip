@@ -47,7 +47,8 @@ public class SuscripcionServicioReal {
                 = suscripcionRepository.findByUsuarioIdAndEstado(usuarioId, EstadoSuscripcion.ACTIVA);
 
         if (existingSubscription.isPresent()) {
-            throw new RuntimeException("User already has an active subscription");
+            log.warn("User {} already has an active subscription", usuarioId);
+            throw new IllegalStateException("El usuario ya tiene una suscripción activa.");
         }
 
         // Creamos la nueva suscripción
@@ -69,7 +70,7 @@ public class SuscripcionServicioReal {
 
             return RespuestaSuscripcionDTO.builder()
                     .exito(true)
-                    .mensaje("Free subscription activated successfully")
+                    .mensaje("Suscripción gratuita activada correctamente")
                     .idSuscripcion(suscripcionId)
                     .plan(plan.getNombre())
                     .estado(EstadoSuscripcion.ACTIVA.name())
@@ -115,14 +116,14 @@ public class SuscripcionServicioReal {
                 usuarioId, idSuscripcion, inmediata);
 
         UsuarioSuscripcion suscripcion = suscripcionRepository.findById(idSuscripcion)
-                .orElseThrow(() -> new RuntimeException("Subscription not found"));
+                .orElseThrow(() -> new RuntimeException("Suscripción no encontrada"));
 
         if (!suscripcion.getUsuarioId().equals(usuarioId)) {
-            throw new RuntimeException("Subscription does not belong to user");
+            throw new RuntimeException("La suscripción no pertenece al usuario.");
         }
 
         if (suscripcion.getEstado() == EstadoSuscripcion.CANCELADA) {
-            throw new RuntimeException("Subscription is already cancelled");
+            throw new RuntimeException("La suscripción ya está cancelada.");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -191,7 +192,7 @@ public class SuscripcionServicioReal {
         if (suscripcionOpt.isEmpty()) {
             // Devolver los límites del plan gratuito
             PlanSuscripcion planGratuito = planRepository.findByNombreIgnoreCase("gratuito")
-                    .orElseThrow(() -> new RuntimeException("Free plan not configured"));
+                    .orElseThrow(() -> new RuntimeException("Plan gratuito no configurado"));
 
             return RespuestaVerificacionDTO.builder()
                     .valida(false)
@@ -256,10 +257,18 @@ public class SuscripcionServicioReal {
         } else {
             // No se encontró suscripción - devolver el plan gratuito
             PlanSuscripcion planGratuito = planRepository.findByNombreIgnoreCase("gratuito")
-                    .orElseThrow(() -> new RuntimeException("Free plan not configured"));
+                    .orElseThrow(() -> new RuntimeException("Plan gratuito no configurado"));
 
             respuesta.put("usuario_id", usuarioId);
             respuesta.put("plan", "gratuito");
+            respuesta.put("id_suscripcion", null);
+            respuesta.put("estado", EstadoSuscripcion.SIN_SUSCRIPCION.name());
+            respuesta.put("fecha_inicio", null);
+            respuesta.put("fecha_expiracion", null);
+            respuesta.put("dias_restantes", null);
+            respuesta.put("horas_restantes", null);
+            respuesta.put("cancelar_al_final_periodo", false);
+            respuesta.put("horas_hasta_cancelacion", null);
 //            respuesta.put("limites", obtenerLimitesPlan(planGratuito));
             respuesta.put("es_premium", false);
         }

@@ -88,4 +88,5 @@ public interface UsuarioSuscripcionRepositorio extends JpaRepository<UsuarioSusc
         LocalDateTime startDate, 
         LocalDateTime endDate
     );
+    long countByEstado(EstadoSuscripcion estado);
 }

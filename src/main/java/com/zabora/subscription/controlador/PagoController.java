@@ -107,6 +107,7 @@ public class PagoController {
              // 7. Completar la respuesta
             mpResponse.setSubscriptionId(request.getIdSuscripcion());
             mpResponse.setPaymentId(pago.getId());
+            mpResponse.setPublicKey(mercadoPagoServicio.getPublicKey());
 
             log.info("PREFERENCIA CREADA EXITOSAMENTE");
             log.info("Preference ID: {}", mpResponse.getPreferenceId());
