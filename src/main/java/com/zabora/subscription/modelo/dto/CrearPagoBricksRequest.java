@@ -10,26 +10,21 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-/**
- * DTO para crear preferencia de pago con MercadoPago Checkout Bricks
- */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CrearPagoBricksRequest {
 
-    @NotBlank(message = "ID de suscripción es requerido")
+    @NotBlank(message = "El ID de suscripcion es requerido")
     private String idSuscripcion;
 
-    @NotNull(message = "Monto es requerido")
-    @Positive(message = "Monto debe ser positivo")
+    @NotNull(message = "El monto es requerido")
+    @Positive(message = "El monto debe ser positivo")
     private BigDecimal monto;
 
-    @NotBlank(message = "Tipo de pago es requerido")
-    private String tipoPago; // "tarjeta_credito", "pse", "wallet"
+    @NotBlank(message = "El tipo de pago es requerido")
+    private String tipoPago;
 
     private Boolean recibirFactura = false;
-
-    private String descripcion;
 }

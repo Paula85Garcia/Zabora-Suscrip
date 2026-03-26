@@ -2,10 +2,11 @@ package com.zabora.subscription.integration.controller;
 
 import com.zabora.subscription.integration.BaseIntegrationTest;
 import com.zabora.subscription.integration.config.TestDataFactory;
-import com.zabora.subscription.modelo.dto.CrearPagoRequest;
 import com.zabora.subscription.modelo.dto.SolicitudSuscripcionDTO;
 import org.junit.jupiter.api.*;
 import org.springframework.test.annotation.DirtiesContext;
+
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -46,82 +47,53 @@ class PagoControladorIntegrationTest extends BaseIntegrationTest {
     @Order(1)
     @DisplayName("✅ Debe crear preferencia de pago con datos válidos")
     void debeCrearPreferenciaDePago() {
-        CrearPagoRequest request = TestDataFactory.pagoRequest(suscripcionId);
-
+        // Test simplificado ya que eliminamos Checkout Pro
         given()
                 .spec(authenticatedRequest(10, "pago-test@example.com", "USER"))
-                .body(request)
         .when()
-                .post("/api/pagos/crear-preferencia")
+                .get("/api/pagos/bricks/public-key")
         .then()
                 .statusCode(200)
-                .body("preferenceId", notNullValue())
-                .body("initPoint", notNullValue())
-                .body("publicKey", notNullValue())
-                .body("subscriptionId", equalTo(suscripcionId))
-                .body("paymentId", notNullValue())
-                .body("amount", equalTo(29900.0f));
+                .body("publicKey", notNullValue());
     }
 
-    // ========== TEST 2: CREAR PREFERENCIA CON SUSCRIPCIÓN INEXISTENTE ==========
+    // ========== TEST 2: OBTENER PUBLIC KEY ==========
 
     @Test
     @Order(2)
-    @DisplayName("❌ Debe rechazar crear preferencia con suscripción inexistente")
-    void debeRechazarPreferenciaConSuscripcionInexistente() {
-        CrearPagoRequest request = TestDataFactory.pagoRequest("sub_INEXISTENTE");
-
-        given()
-                .spec(authenticatedRequest(10, "pago-test@example.com", "USER"))
-                .body(request)
-        .when()
-                .post("/api/pagos/crear-preferencia")
-        .then()
-                .statusCode(500)
-                .body("error", containsStringIgnoringCase("no encontrada"));
-    }
-
-    // ========== TEST 3: OBTENER PUBLIC KEY ==========
-
-    @Test
-    @Order(3)
     @DisplayName("✅ Debe obtener la llave pública de MercadoPago")
     void debeObtenerPublicKey() {
         given()
                 .spec(unauthenticatedRequest())
         .when()
-                .get("/api/pagos/public-key")
+                .get("/api/pagos/bricks/public-key")
         .then()
                 .statusCode(200)
                 .body("publicKey", notNullValue())
                 .body("publicKey", not(emptyString()));
     }
 
-    // ========== TEST 4: DOBLE PAGO PENDIENTE NO PERMITIDO ==========
+    // ========== TEST 3: PROCESAR PAGO ==========
 
     @Test
-    @Order(4)
-    @DisplayName("❌ Debe rechazar crear segunda preferencia si ya hay pago pendiente")
-    void debeRechazarDoblePreferencia() {
-        CrearPagoRequest request = TestDataFactory.pagoRequest(suscripcionId);
+    @Order(3)
+    @DisplayName("✅ Debe procesar pago con datos válidos")
+    void debeProcesarPago() {
+        Map<String, Object> pagoRequest = Map.of(
+            "token", "test_token_123",
+            "payment_method_id", "visa",
+            "transaction_amount", 29900,
+            "description", "Test payment"
+        );
 
-        // Primer intento (debe funcionar)
         given()
                 .spec(authenticatedRequest(10, "pago-test@example.com", "USER"))
-                .body(request)
+                .body(pagoRequest)
         .when()
-                .post("/api/pagos/crear-preferencia")
+                .post("/api/suscripciones/procesar-pago")
         .then()
-                .statusCode(200);
-
-        // Segundo intento (debe fallar)
-        given()
-                .spec(authenticatedRequest(10, "pago-test@example.com", "USER"))
-                .body(request)
-        .when()
-                .post("/api/pagos/crear-preferencia")
-        .then()
-                .statusCode(400)
-                .body("error", containsStringIgnoringCase("pendiente"));
+                .statusCode(200)
+                .body("status", equalTo("approved"))
+                .body("id", notNullValue());
     }
 }

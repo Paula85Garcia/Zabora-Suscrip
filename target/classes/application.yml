@@ -1,0 +1,127 @@
+# =======================================
+# ZABORA - CONFIGURACIÓN SUSCRIPCIONES
+# =======================================
+spring:
+  application:
+    name: zabora-subscription-service
+
+  cloud:
+    consul:
+      enabled: true
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        prefer-ip-address: true
+        service-name: zabora-subscription-service
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+      config:
+        enabled: false
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:mysql://localhost:3306/zabora_subscriptions?sslMode=DISABLED&allowPublicKeyRetrieval=true}
+    username: ${DATABASE_USERNAME:root}
+    password: ${DATABASE_PASSWORD:Pau2003mich.}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+      jdbc:
+        time_zone: America/Bogota
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:zaborapayment@gmail.com}
+    password: ${MAIL_PASSWORD:pvrbddmghsgktvfe}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        transport:
+          protocol: smtp
+
+server:
+  port: ${SERVER_PORT:8004}
+  shutdown: graceful
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# =======================================
+# MERCADOPAGO CONFIGURATION
+# =======================================
+mercadopago:
+  # CREDENCIALES
+  access-token: APP_USR-5585734670493828-032008-e4efc029c41dd57bc3a017df30314c9d-3223648585
+  public-key: APP_USR-ec81463d-913f-4b19-9d79-f21b4e0c615e
+  environment: produccion
+
+  webhook:
+    secret: 6ec7b2ce42f1627320ad0bc13e1e79e295c9ef253090eb4e5a768e39c6558b7b
+    notification-url: https://prepiously-gestureless-rosita.ngrok-free.dev/api/webhooks/mercadopago
+  # URLs DE REDIRECCIÓN - Frontend
+  success-url: ${FRONTEND_URL:http://localhost:4200}/suscripciones/exito
+  failure-url: ${FRONTEND_URL:http://localhost:4200}/suscripciones/checkout?payment=failure
+  pending-url: ${FRONTEND_URL:http://localhost:4200}/suscripciones/checkout?payment=pending
+
+# Email configuration
+email:
+  enabled: ${EMAIL_ENABLED:true}
+  from: ${EMAIL_FROM:zaborapayment@gmail.com}
+
+# Swagger/OpenAPI
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:true}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${SWAGGER_UI_ENABLED:true}
+    path: /swagger-ui.html
+
+# Logging
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.zabora.subscription: ${LOG_LEVEL_APP:DEBUG}
+    org.springframework.web: ${LOG_LEVEL_WEB:INFO}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:false}
+    com.mercadopago: ${LOG_LEVEL_MP:DEBUG}
+    com.zabora.subscription.repository.AuthClient: ${LOG_LEVEL_AUTH:DEBUG}
+    feign: ${LOG_LEVEL_FEIGN:DEBUG}
+    org.springframework.cloud.openfeign: ${LOG_LEVEL_FEIGN:DEBUG}
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${ACTUATOR_ENDPOINTS:health,info}
+  endpoint:
+    health:
+      show-details: ${ACTUATOR_HEALTH_DETAILS:always}
+
+app:
+  mode: ${APP_MODE:development}
+
+# Feign Client Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: ${FEIGN_CONNECT_TIMEOUT:10000}
+        readTimeout: ${FEIGN_READ_TIMEOUT:30000}
+        loggerLevel: ${FEIGN_LOG_LEVEL:full}
+      auth-service:
+        connectTimeout: ${FEIGN_CONNECT_TIMEOUT:10000}
+        readTimeout: ${FEIGN_READ_TIMEOUT:30000}
+        loggerLevel: ${FEIGN_LOG_LEVEL:full}

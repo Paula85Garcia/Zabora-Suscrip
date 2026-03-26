@@ -29,7 +29,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 USER spring
 
 # Copiar el JAR generado desde la etapa de build
-COPY --from=builder /app/target/Zabora-Suscrip-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /app/target/subscription-service-1.0.0.jar app.jar
 
 # Exponer el puerto que usa el microservicio
 ENV PORT=8004

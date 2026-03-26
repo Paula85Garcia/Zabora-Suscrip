@@ -1,13 +1,258 @@
-# GUÍA COMPLETA: SISTEMA DE SUSCRIPCIONES ZABORA
+# Zabora Subscription Service
 
+Servicio de suscripciones para la plataforma Zabora con integración de MercadoPago y PSE.
 
----
+## 🚀 Características
 
-## TABLA DE CONTENIDOS
+- ✅ Gestión de planes de suscripción (Básico, Premium, Empresarial)
+- ✅ Integración con MercadoPago (Tarjetas, PSE, Efectivo)
+- ✅ Webhooks para notificaciones de pago
+- ✅ Sistema de notificaciones al Auth Service
+- ✅ Gestión de pagos y reembolsos
+- ✅ Email service para confirmaciones
+- ✅ API REST completa con documentación
 
-1. [Arquitectura del Sistema de Suscripciones](#arquitectura-del-sistema-de-suscripciones)
-2. [Pila Tecnológica](#pila-tecnológica)
-3. [Características Principales](#características-principales)
+## 📋 Prerrequisitos
+
+- Java 17+
+- Maven 3.8+
+- MySQL 8.0+
+- Node.js 16+ (para frontend)
+
+## 🛠️ Instalación
+
+1. **Clonar el repositorio**
+```bash
+git clone <repository-url>
+cd Zabora-Suscrip
+```
+
+2. **Configurar base de datos**
+```sql
+CREATE DATABASE zabora_subscriptions;
+CREATE USER 'zabora'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON zabora_subscriptions.* TO 'zabora'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+3. **Configurar variables de entorno**
+```bash
+# Copiar archivo de configuración
+cp application-example.yml application.yml
+
+# Editar configuración
+nano application.yml
+```
+
+4. **Compilar y ejecutar**
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+## 🧪 Ejecutar Tests
+
+### Tests Unitarios
+```bash
+# Ejecutar todos los tests
+mvn test
+
+# Ejecutar tests específicos
+mvn test -Dtest=SuscripcionServicioTest
+mvn test -Dtest=SuscripcionControllerTest
+```
+
+### Tests de Integración
+```bash
+# Requiere Docker para bases de datos
+mvn verify -Pintegration-test
+```
+
+### Reportes de Tests
+Los reportes se generan en:
+```
+target/surefire-reports/
+target/failsafe-reports/
+```
+
+## 📊 Endpoints Principales
+
+### Gestión de Suscripciones
+- `GET /api/suscripciones/planes` - Listar planes disponibles
+- `POST /api/suscripciones/crear` - Crear nueva suscripción
+- `GET /api/suscripciones/estado` - Obtener estado actual
+- `POST /api/suscripciones/cancelar` - Cancelar suscripción
+
+### Gestión de Pagos
+- `POST /api/pagos/crear` - Crear pago
+- `GET /api/pagos/{id}` - Obtener detalles de pago
+- `POST /api/pagos/pse` - Pago con PSE
+- `POST /api/pagos/reembolsar` - Solicitar reembolso
+
+### Webhooks
+- `POST /api/webhooks/mercadopago` - Recepción de notificaciones MercadoPago
+- `GET /api/webhooks/mercadopago` - Verificación de webhook
+
+## 💳 Integración de Pagos
+
+### MercadoPago
+```java
+// Crear preferencia de pago
+PagoRequest request = PagoRequest.builder()
+    .planId("premium")
+    .usuarioId(123)
+    .metodoPago("tarjeta")
+    .build();
+
+ResponseEntity<PagoResponse> response = pagoController.crearPago(request);
+```
+
+### PSE
+```java
+// Pago con PSE
+PseRequest request = PseRequest.builder()
+    .planId("premium")
+    .usuarioId(123)
+    .banco("1022")
+    .tipoPersona("natural")
+    .build();
+
+ResponseEntity<PagoResponse> response = pagoController.crearPagoPse(request);
+```
+
+## 🔧 Configuración
+
+### Variables de Entorno
+```bash
+# MercadoPago
+MERCADOPAGO_ACCESS_TOKEN=APP_USR-5585734670493828-03200
+MERCADOPAGO_PUBLIC_KEY=APP_USR-ec81463d-913f-4b19-9d79-f21b4e0c615e
+MERCADOPAGO_ENVIRONMENT=production
+
+# Base de Datos
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=zabora_subscriptions
+DB_USER=root
+DB_PASSWORD=root
+
+# Auth Service
+AUTH_SERVICE_URL=http://localhost:8000
+
+# Email
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USERNAME=your-email@gmail.com
+EMAIL_PASSWORD=your-app-password
+```
+
+## 🐳 Docker
+
+### Construir Imagen
+```bash
+docker build -t zabora-subscription .
+```
+
+### Ejecutar con Docker Compose
+```bash
+docker-compose up -d
+```
+
+### Variables Docker
+```bash
+# Para producción
+docker run -e SPRING_PROFILES_ACTIVE=prod \
+           -e DB_HOST=mysql \
+           -e MERCADOPAGO_ACCESS_TOKEN=your-token \
+           zabora-subscription
+```
+
+## 📝 Logs
+
+Los logs se configuran en `application.yml`:
+- Consola: Formato legible con colores
+- Archivo: `logs/subscription-service.log`
+- Niveles: DEBUG (dev), INFO (prod)
+
+## 🔄 Flujo de Pago
+
+1. **Usuario selecciona plan** → `POST /api/suscripciones/crear`
+2. **Sistema crea preferencia** → MercadoPago/PSE
+3. **Usuario completa pago** → Redirección a proveedor
+4. **Webhook recibe confirmación** → `POST /api/webhooks/mercadopago`
+5. **Sistema actualiza suscripción** → Estado ACTIVO
+6. **Notificación a Auth Service** → Actualización de rol
+7. **Email confirmación** → Usuario notificado
+
+## 🛡️ Seguridad
+
+- Validación de JWT en endpoints protegidos
+- Rate limiting configurable
+- Sanitización de inputs
+- HTTPS obligatorio en producción
+- Verificación de webhooks
+
+## 📈 Monitoreo
+
+### Health Checks
+- `GET /actuator/health` - Estado del servicio
+- `GET /actuator/info` - Información del servicio
+- `GET /actuator/metrics` - Métricas de rendimiento
+
+### Métricas Clave
+- Tiempo de respuesta de pagos
+- Tasa de éxito de suscripciones
+- Errores de MercadoPago
+- Latencia de base de datos
+
+## 🐛 Troubleshooting
+
+### Problemas Comunes
+
+#### 1. Error de conexión a MercadoPago
+```bash
+# Verificar token
+curl -H "Authorization: Bearer $MERCADOPAGO_ACCESS_TOKEN" \
+     https://api.mercadopago.com/v1/users/me
+```
+
+#### 2. Webhook no recibe notificaciones
+```bash
+# Verificar ngrok
+ngrok http 8004
+
+# Probar webhook
+curl -X POST http://localhost:8004/api/webhooks/mercadopago \
+     -H "Content-Type: application/json" \
+     -d '{"type":"payment","data":{"id":"123"}}'
+```
+
+#### 3. Error de base de datos
+```bash
+# Verificar conexión
+mysql -h localhost -u root -p zabora_subscriptions
+
+# Revisar logs
+tail -f logs/subscription-service.log
+```
+
+## 📞 Soporte
+
+- **Documentación API**: `http://localhost:8004/swagger-ui.html`
+- **Logs**: `logs/subscription-service.log`
+- **Health**: `http://localhost:8004/actuator/health`
+
+## 🤝 Contribuir
+
+1. Fork del proyecto
+2. Crear feature branch: `git checkout -b feature/nueva-funcionalidad`
+3. Commit changes: `git commit -am 'Agregar nueva funcionalidad'`
+4. Push branch: `git push origin feature/nueva-funcionalidad`
+5. Pull Request
+
+## 📄 Licencia
+
+MIT License - Ver archivo LICENSE para detalles
 4. [Requisitos Previos](#requisitos-previos)
 5. [Instalación y Configuración](#instalación-y-configuración)
 6. [Instalación de Ngrok](#instalación-de-ngrok)

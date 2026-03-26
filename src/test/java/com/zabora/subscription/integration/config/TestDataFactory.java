@@ -1,7 +1,6 @@
 package com.zabora.subscription.integration.config;
 
 import com.zabora.subscription.modelo.dto.CrearPagoBricksRequest;
-import com.zabora.subscription.modelo.dto.CrearPagoRequest;
 import com.zabora.subscription.modelo.dto.SolicitudSuscripcionDTO;
 
 import java.math.BigDecimal;
@@ -28,18 +27,18 @@ public class TestDataFactory {
 
     // ========== PAGOS ==========
 
-    public static CrearPagoRequest pagoRequest(String suscripcionId) {
-        return CrearPagoRequest.builder()
-                .idSuscripcion(suscripcionId)
-                .monto(new BigDecimal("29900"))
-                .tipoPago("tarjeta_credito")
-                .recibirFactura(false)
-                .build();
+    public static Map<String, Object> pagoRequest(String suscripcionId) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("idSuscripcion", suscripcionId);
+        request.put("monto", new BigDecimal("29900"));
+        request.put("tipoPago", "tarjeta_credito");
+        request.put("recibirFactura", false);
+        return request;
     }
 
-    public static CrearPagoRequest pagoRequestConFactura(String suscripcionId) {
-        CrearPagoRequest request = pagoRequest(suscripcionId);
-        request.setRecibirFactura(true);
+    public static Map<String, Object> pagoRequestConFactura(String suscripcionId) {
+        Map<String, Object> request = pagoRequest(suscripcionId);
+        request.put("recibirFactura", true);
         return request;
     }
 

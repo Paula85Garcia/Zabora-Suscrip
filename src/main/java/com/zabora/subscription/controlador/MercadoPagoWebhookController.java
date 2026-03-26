@@ -1,264 +1,138 @@
 package com.zabora.subscription.controlador;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Optional;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
-import com.zabora.subscription.modelo.entidad.Pago;
-import com.zabora.subscription.modelo.entidad.UsuarioSuscripcion;
-import com.zabora.subscription.modelo.enumeracion.EstadoPago;
-import com.zabora.subscription.modelo.enumeracion.EstadoSuscripcion;
-import com.zabora.subscription.repositorio.AuthClient;
-import com.zabora.subscription.repositorio.PagoRepositorio;
-import com.zabora.subscription.repositorio.UsuarioSuscripcionRepositorio;
-import com.zabora.subscription.servicio.EmailService;
-
+import com.zabora.subscription.servicio.PagoServicio;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-@Slf4j
+import java.util.Map;
+
+/**
+ * Recibe las notificaciones de MercadoPago cuando un pago cambia de estado.
+ *
+ * MercadoPago envia:
+ *   POST /api/webhooks/mercadopago
+ *   Body: { "type": "payment", "data": { "id": "1234567890" } }
+ *
+ * Siempre responde 200 OK para evitar reintentos.
+ */
 @RestController
 @RequestMapping("/api/webhooks/mercadopago")
 @RequiredArgsConstructor
 public class MercadoPagoWebhookController {
 
-    private final PagoRepositorio pagoRepositorio;
-    private final UsuarioSuscripcionRepositorio suscripcionRepositorio;
-    private final AuthClient authClient;
-     private final EmailService emailService;
-     
+    private static final Logger log = LoggerFactory.getLogger(MercadoPagoWebhookController.class);
+
+    private final PagoServicio pagoServicio;
+
     @PostMapping
-    public ResponseEntity<String> recibirWebhook(
-            @RequestBody Map<String, Object> payload,
-            @RequestParam(required = false) Map<String, String> params
-    ) {
+    public ResponseEntity<String> recibirWebhook(@RequestBody Map<String, Object> payload) {
+        log.info("Webhook recibido: {}", payload);
         try {
-            log.info("WEBHOOK RECIBIDO DE MERCADOPAGO");
-            log.info("Payload: {}", payload);
-
             String type = (String) payload.get("type");
-            String action = (String) payload.get("action");
-
-            log.info("Tipo: {}", type);
-            log.info("Accion: {}", action);
-
             if ("payment".equals(type)) {
                 procesarNotificacionPago(payload);
             } else {
-                log.info("Tipo de notificacion no procesada: {}", type);
+                log.info("Tipo de notificacion ignorada: {}", type);
             }
-
-            return ResponseEntity.ok("OK");
-
         } catch (Exception e) {
             log.error("Error procesando webhook: {}", e.getMessage(), e);
-            return ResponseEntity.ok("ERROR");
         }
+        return ResponseEntity.ok("OK");
+    }
+
+    @GetMapping
+    public ResponseEntity<String> verificar() {
+        return ResponseEntity.ok("Webhook activo");
     }
 
     private void procesarNotificacionPago(Map<String, Object> payload) {
-        try {
-            Map<String, Object> data = (Map<String, Object>) payload.get("data");
-            String paymentIdStr = (String) data.get("id");
-            Long paymentId = Long.parseLong(paymentIdStr);
-
-            log.info("Payment ID detectado: {}", paymentId);
-
-            PaymentClient client = new PaymentClient();
-            Payment payment = client.get(paymentId);
-
-            log.info("DETALLES DEL PAGO");
-            log.info("ID: {}", payment.getId());
-            log.info("Status: {}", payment.getStatus());
-            log.info("Amount: {}", payment.getTransactionAmount());
-
-           Map<String, Object> metadata = payment.getMetadata();
-String suscripcionId = (String) metadata.get("suscripcion_id");
-
-// Maneja Integer, Double y String
-Object usuarioIdObj = metadata.get("usuario_id");
-Integer usuarioId = null;
-
-if (usuarioIdObj instanceof Integer) {
-    usuarioId = (Integer) usuarioIdObj;
-    log.info("usuario_id es Integer: {}", usuarioId);
-} else if (usuarioIdObj instanceof Double) {
-    usuarioId = ((Double) usuarioIdObj).intValue();
-    log.info("usuario_id es Double, convertido a Integer: {}", usuarioId);
-} else if (usuarioIdObj instanceof String) {
-    try {
-        String str = (String) usuarioIdObj;
-        if (str.contains(".")) {
-            usuarioId = Double.valueOf(str).intValue();
-        } else {
-            usuarioId = Integer.parseInt(str);
+        Object dataObj = payload.get("data");
+        if (!(dataObj instanceof Map)) {
+            log.warn("Webhook sin campo 'data' valido");
+            return;
         }
-        log.info("usuario_id es String, convertido a Integer: {}", usuarioId);
-    } catch (NumberFormatException e) {
-        log.error("No se pudo convertir usuario_id String a Integer: {}", usuarioIdObj);
-        return;
-    }
-} else {
-    log.error("Tipo inesperado para usuario_id: {}", 
-              usuarioIdObj != null ? usuarioIdObj.getClass() : "null");
-    return;
-}
 
-log.info("Suscripción ID: {}", suscripcionId);
-log.info("Usuario ID: {}", usuarioId);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = (Map<String, Object>) dataObj;
+        String paymentIdStr = String.valueOf(data.get("id"));
 
-            // Buscar pago en BD
-            Pago pagoLocal = pagoRepositorio.findBySuscripcionIdAndEstado(
-                    suscripcionId,
-                    EstadoPago.PENDIENTE
-            ).orElse(null);
+        if (paymentIdStr == null || "null".equals(paymentIdStr)) {
+            log.warn("Webhook sin payment ID");
+            return;
+        }
 
-            if (pagoLocal == null) {
-                log.warn("No se encontró pago pendiente para suscripción: {}", suscripcionId);
+        log.info("Procesando pago ID: {}", paymentIdStr);
+
+        try {
+            // Verificar si es un ID numérico (de MercadoPago) o es el ID de suscripción
+            if (paymentIdStr.startsWith("sub_")) {
+                // Es un ID de suscripción, no un payment_id de MercadoPago
+                log.info("ID de suscripción recibido, no es un payment_id de MercadoPago. Esperando webhook real.");
                 return;
             }
-
-            log.info("Pago encontrado en BD: {}", pagoLocal.getId());
-
-            String status = payment.getStatus();
-            actualizarPagoSegunEstado(pagoLocal, status, payment, suscripcionId, usuarioId);
-
-        } catch (MPException | MPApiException e) {
-            log.error("Error consultando pago en MercadoPago: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("Error procesando notificación de pago: {}", e.getMessage(), e);
-        }
-    }
-
-    
-    private void actualizarPagoSegunEstado(
-            Pago pago, 
-            String mpStatus, 
-            Payment mpPayment, 
-            String suscripcionId,
-            Integer usuarioId) {
-        
-        log.info("Actualizando pago según estado de MercadoPago: {}", mpStatus);
-
-        switch (mpStatus) {
-            case "approved":
-                log.info("Pago APROBADO");
-
-                pago.setEstado(EstadoPago.COMPLETADO);
-                pago.setIdIntentoPago(mpPayment.getId().toString());
-                pago.setCodigoAutorizacion(mpPayment.getAuthorizationCode());
-                pago.setFechaPago(LocalDateTime.now());
-                pagoRepositorio.save(pago);
-                
-                log.info("Pago actualizado a COMPLETADO");
-
-                activarSuscripcion(suscripcionId, usuarioId);
-                break;
-
-            case "pending":
-            case "in_process":
-                log.info("Pago PENDIENTE");
-                break;
-
-            case "rejected":
-            case "cancelled":
-                log.info("Pago FALLIDO");
-                pago.setEstado(EstadoPago.FALLIDO);
-                pagoRepositorio.save(pago);
-                break;
-
-            case "refunded":
-            case "charged_back":
-                log.info("Pago REEMBOLSADO");
-                pago.setEstado(EstadoPago.REEMBOLSADO);
-                pagoRepositorio.save(pago);
-                break;
-
-            default:
-                log.warn("Estado de MercadoPago desconocido: {}", mpStatus);
-        }
-    }
-
-    
-    private void activarSuscripcion(String suscripcionId, Integer usuarioId) {
-        try {
-            log.info("═══════════════════════════════════════");
-            log.info("ACTIVANDO SUSCRIPCIÓN");
-            log.info("═══════════════════════════════════════");
-            log.info("Suscripción ID: {}", suscripcionId);
-            log.info("Usuario ID: {}", usuarioId);
             
-            Optional<UsuarioSuscripcion> suscripcionOpt = suscripcionRepositorio.findById(suscripcionId);
+            Long mpPaymentId = Long.parseLong(paymentIdStr);
+            
+            PaymentClient client = new PaymentClient();
+            Payment payment = client.get(mpPaymentId);
+            log.info("Pago de MP - Status: {}, Monto: {}", payment.getStatus(), payment.getTransactionAmount());
 
-            if (suscripcionOpt.isEmpty()) {
-                log.error("Suscripción no encontrada: {}", suscripcionId);
+            Map<String, Object> metadata = payment.getMetadata();
+            if (metadata == null) {
+                log.warn("Pago {} sin metadata. No se puede identificar la suscripcion.", paymentIdStr);
                 return;
             }
 
-            UsuarioSuscripcion suscripcion = suscripcionOpt.get();
+            String suscripcionId = (String) metadata.get("suscripcion_id");
+            Integer usuarioId = extraerUsuarioId(metadata.get("usuario_id"));
 
-            log.info("Suscripción encontrada");
-            log.info("   - Estado actual: {}", suscripcion.getEstado());
-            log.info("   - Usuario ID: {}", suscripcion.getUsuarioId());
-            log.info("   - Plan: {}", suscripcion.getPlan().getNombre());
+            if (suscripcionId == null || usuarioId == null) {
+                log.warn("Metadata incompleta - suscripcionId: {}, usuarioId: {}", suscripcionId, usuarioId);
+                return;
+            }
 
+            switch (payment.getStatus()) {
+                case "approved" -> {
+                    log.info("Pago aprobado - activando suscripcion: {}", suscripcionId);
+                    pagoServicio.activarSuscripcionPorPago(suscripcionId, usuarioId, payment);
+                }
+                case "rejected", "cancelled" -> {
+                    log.info("Pago rechazado/cancelado - marcando fallido: {}", suscripcionId);
+                    pagoServicio.marcarPagoFallido(suscripcionId);
+                }
+                case "pending", "in_process" ->
+                    log.info("Pago en proceso - esperando: {}", paymentIdStr);
+                default ->
+                    log.warn("Estado no reconocido: {}", payment.getStatus());
+            }
 
-            // SOLO ACTIVAR SI ESTÁ PENDIENTE
-
-            if (suscripcion.getEstado() == EstadoSuscripcion.PENDIENTE_PAGO) {
-            LocalDateTime now = LocalDateTime.now();
-            suscripcion.setEstado(EstadoSuscripcion.ACTIVA);
-            suscripcion.setInicioPeriodoActual(now);
-            suscripcion.setFinPeriodoActual(now.plusDays(30));
-            suscripcion.setFechaActualizacion(now);
-            suscripcionRepositorio.save(suscripcion);
-            log.info("Suscripción {} activada exitosamente", suscripcionId);
-        } else {
-            log.info("Suscripción ya estaba en estado: {}", suscripcion.getEstado());
+        } catch (NumberFormatException e) {
+            log.warn("ID de pago no es numérico (puede ser ID de suscripción): {}", paymentIdStr);
+        } catch (MPApiException e) {
+            log.error("Error API MercadoPago - Status: {}, Body: {}",
+                e.getStatusCode(), e.getApiResponse().getContent());
+        } catch (MPException e) {
+            log.error("Error SDK MercadoPago: {}", e.getMessage());
         }
-
-
-            suscripcionRepositorio.save(suscripcion);
-
-            log.info("Suscripción {} activada exitosamente", suscripcionId);
-            log.info("Válida hasta: {}", suscripcion.getFinPeriodoActual());
-
-            // ACTUALIZAR ROL EN AUTH SERVICE
-           // SIEMPRE LLAMAR A AUTH-SERVICE (aunque ya esté activa)
-        log.info("═══════════════════════════════════════");
-        log.info("ACTUALIZANDO ROL EN AUTH SERVICE");
-        log.info("═══════════════════════════════════════");
-        log.info("POST http://localhost:8000/api/upgrade/premium/{}", usuarioId);
-        
-        try {
-            authClient.actualizarRolPremium(usuarioId);
-            log.info("Rol PREMIUM actualizado en auth-service");
-        } catch (Exception e) {
-            log.error("Error al actualizar rol en auth-service", e);
-        }
-        
-        log.info("═══════════════════════════════════════");
-
-    } catch (Exception e) {
-        log.error("Error activando suscripción: {}", e.getMessage(), e);
     }
-}
 
-    @GetMapping
-    public ResponseEntity<String> verificarWebhook() {
-        log.info("Verificación de webhook");
-        return ResponseEntity.ok("Webhook activo");
+    private Integer extraerUsuarioId(Object valor) {
+        if (valor == null) return null;
+        try {
+            if (valor instanceof Integer) return (Integer) valor;
+            if (valor instanceof Double) return ((Double) valor).intValue();
+            String str = String.valueOf(valor);
+            return str.contains(".") ? Double.valueOf(str).intValue() : Integer.parseInt(str);
+        } catch (NumberFormatException e) {
+            log.error("No se pudo convertir usuario_id: {}", valor);
+            return null;
+        }
     }
 }

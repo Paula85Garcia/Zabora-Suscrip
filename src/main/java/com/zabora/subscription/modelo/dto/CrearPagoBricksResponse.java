@@ -7,9 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-/**
- * DTO para respuesta de creación de preferencia con Bricks
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -17,8 +14,6 @@ import java.math.BigDecimal;
 public class CrearPagoBricksResponse {
 
     private String preferenceId;
-    private String initPoint;
-    private String sandboxInitPoint;
     private String publicKey;
     private BigDecimal amount;
     private String currency;

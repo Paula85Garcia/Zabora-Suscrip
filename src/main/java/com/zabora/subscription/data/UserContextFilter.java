@@ -41,24 +41,11 @@ public class UserContextFilter extends OncePerRequestFilter {
 
 
         Integer userId = request.getHeader("X-User-Id") != null ? Integer.valueOf(request.getHeader("X-User-Id")) : null;
-
         String email = request.getHeader("X-User-Email");
-
         String role = request.getHeader("X-User-Role");
 
-
-
-        // Temporal: Para pruebas, usar usuario hardcodeado si no viene de headers
-        if (userId == null) {
-            userId = 1; // Usuario hardcodeado para pruebas
-            email = "test@example.com";
-            role = "USER";
-        }
-
         if (userId != null) {
-
             UserContext.set(new UserData(userId, email, role));
-
         }
 
 

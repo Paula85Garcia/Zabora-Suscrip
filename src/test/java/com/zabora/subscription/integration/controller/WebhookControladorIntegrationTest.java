@@ -2,12 +2,8 @@ package com.zabora.subscription.integration.controller;
 
 import com.zabora.subscription.integration.BaseIntegrationTest;
 import com.zabora.subscription.integration.config.TestDataFactory;
-import com.zabora.subscription.modelo.dto.CrearPagoRequest;
 import com.zabora.subscription.modelo.dto.SolicitudSuscripcionDTO;
-import com.zabora.subscription.modelo.enumeracion.EstadoPago;
-import com.zabora.subscription.repositorio.PagoRepositorio;
 import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Map;
@@ -19,16 +15,12 @@ import static org.hamcrest.Matchers.equalTo;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class WebhookControladorIntegrationTest extends BaseIntegrationTest {
 
-    @Autowired
-    private PagoRepositorio pagoRepo;
-
     private static String suscripcionId;
-    private static String pagoId;
 
     @BeforeEach
     void setup() {
         if (suscripcionId == null) {
-            // Crear suscripción y pago para probar webhook
+            // Crear suscripción para probar webhook (simplificado)
             SolicitudSuscripcionDTO solicitud = TestDataFactory.solicitudPremium();
 
             suscripcionId = given()
@@ -40,18 +32,6 @@ class WebhookControladorIntegrationTest extends BaseIntegrationTest {
                     .statusCode(200)
             .extract()
                     .path("idSuscripcion");
-
-            CrearPagoRequest pagoRequest = TestDataFactory.pagoRequest(suscripcionId);
-
-            pagoId = given()
-                    .spec(authenticatedRequest(20, "webhook-test@example.com", "USER"))
-                    .body(pagoRequest)
-            .when()
-                    .post("/api/pagos/crear-preferencia")
-            .then()
-                    .statusCode(200)
-            .extract()
-                    .path("paymentId");
         }
     }
 

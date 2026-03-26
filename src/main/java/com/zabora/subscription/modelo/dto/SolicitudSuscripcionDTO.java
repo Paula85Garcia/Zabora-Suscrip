@@ -1,15 +1,19 @@
 package com.zabora.subscription.modelo.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class SolicitudSuscripcionDTO {
-    
+
+    private Integer usuarioId;
+
     @NotBlank(message = "El nombre del plan es obligatorio")
     private String nombrePlan;
-    
-    @NotNull(message = "El tipo de pago es obligatorio")
+
     private String tipoPago;
 }
