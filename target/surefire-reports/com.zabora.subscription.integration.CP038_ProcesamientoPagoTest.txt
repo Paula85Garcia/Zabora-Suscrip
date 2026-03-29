@@ -1,0 +1,44 @@
+-------------------------------------------------------------------------------
+Test set: com.zabora.subscription.integration.CP038_ProcesamientoPagoTest
+-------------------------------------------------------------------------------
+Tests run: 5, Failures: 0, Errors: 4, Skipped: 0, Time elapsed: 0.255 s <<< FAILURE! -- in com.zabora.subscription.integration.CP038_ProcesamientoPagoTest
+com.zabora.subscription.integration.CP038_ProcesamientoPagoTest.testEstructuraRespuestaPagoRechazado -- Time elapsed: 0.035 s <<< ERROR!
+java.lang.NullPointerException
+	at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+	at java.base/java.util.ImmutableCollections$MapN.<init>(ImmutableCollections.java:1193)
+	at java.base/java.util.Map.of(Map.java:1552)
+	at com.zabora.subscription.integration.CP038_ProcesamientoPagoTest.testEstructuraRespuestaPagoRechazado(CP038_ProcesamientoPagoTest.java:350)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.zabora.subscription.integration.CP038_ProcesamientoPagoTest.testTraduccionMensajesError -- Time elapsed: 0.042 s <<< ERROR!
+java.lang.NullPointerException
+	at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+	at java.base/java.util.ImmutableCollections$MapN.<init>(ImmutableCollections.java:1193)
+	at java.base/java.util.Map.of(Map.java:1552)
+	at com.zabora.subscription.integration.CP038_ProcesamientoPagoTest.testTraduccionMensajesError(CP038_ProcesamientoPagoTest.java:395)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.zabora.subscription.integration.CP038_ProcesamientoPagoTest.testEstructuraRespuestaPagoExitoso -- Time elapsed: 0.035 s <<< ERROR!
+java.lang.NullPointerException
+	at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+	at java.base/java.util.ImmutableCollections$MapN.<init>(ImmutableCollections.java:1193)
+	at java.base/java.util.Map.of(Map.java:1552)
+	at com.zabora.subscription.integration.CP038_ProcesamientoPagoTest.testEstructuraRespuestaPagoExitoso(CP038_ProcesamientoPagoTest.java:302)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.zabora.subscription.integration.CP038_ProcesamientoPagoTest.testEstructuraBodyEsperado -- Time elapsed: 0.032 s <<< ERROR!
+java.lang.NullPointerException
+	at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+	at java.base/java.util.ImmutableCollections$MapN.<init>(ImmutableCollections.java:1193)
+	at java.base/java.util.Map.of(Map.java:1552)
+	at com.zabora.subscription.integration.CP038_ProcesamientoPagoTest.testEstructuraBodyEsperado(CP038_ProcesamientoPagoTest.java:262)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
