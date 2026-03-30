@@ -3,26 +3,24 @@ package com.zabora.subscription.controlador;
 import com.zabora.subscription.data.UserContext;
 import com.zabora.subscription.modelo.dto.RespuestaSuscripcionDTO;
 import com.zabora.subscription.modelo.dto.SolicitudSuscripcionDTO;
+import com.zabora.subscription.excepcion.AuthServiceException;
 import com.zabora.subscription.servicio.SuscripcionServicio;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/suscripciones")
 @RequiredArgsConstructor
 @Tag(name = "Suscripciones", description = "Gestion de suscripciones de usuario")
 public class SuscripcionController {
-
-    private static final Logger log = LoggerFactory.getLogger(SuscripcionController.class);
 
     private final SuscripcionServicio suscripcionServicio;
 
@@ -73,6 +71,13 @@ public class SuscripcionController {
             return ResponseEntity.ok(suscripcionServicio.cancelarSuscripcion(suscripcionId, inmediata, usuarioId));
         } catch (SecurityException e) {
             return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
+        } catch (AuthServiceException e) {
+            log.error("Cancelación bloqueada: auth-service no degradó al usuario: {}", e.getMessage());
+            return ResponseEntity.status(503).body(Map.of(
+                "error",
+                "No pudimos actualizar tu cuenta en el servicio de usuarios. Reintenta en unos segundos o contacta soporte.",
+                "code",
+                "AUTH_SYNC_FAILED"));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {

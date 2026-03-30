@@ -16,173 +16,196 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * Logica de negocio del webhook de MercadoPago.
+ * Servicio que procesa los eventos de pago recibidos via webhook de MercadoPago.
  *
- * GARANTIAS:
- *  - Idempotencia: si la suscripcion ya esta ACTIVA no la modifica.
- *  - Verificacion por external_reference: no depende de metadata volátil.
- *  - Pago local y suscripcion se actualizan en la misma transaccion.
- *  - Llamada al auth-service es best-effort: si falla, la suscripcion
- *    ya quedo activa en BD y se registra para revision manual.
+ * Flujo:
+ *  1. Recibe el ID del pago de MercadoPago
+ *  2. Consulta los detalles del pago en la API de MercadoPago
+ *  3. Busca el pago local en BD usando external_reference (= suscripcionId)
+ *  4. Actualiza el estado del pago y la suscripcion segun el resultado
+ *
+ * Este servicio es llamado exclusivamente desde WebhookController.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class WebhookPagoServicio {
 
+    private static final String META_RECIBIR_FACTURA = "\"recibirFactura\":true";
+
     private final PagoRepositorio pagoRepositorio;
     private final UsuarioSuscripcionRepositorio suscripcionRepositorio;
     private final AuthServicio authServicio;
+    private final ServicioNotificaciones servicioNotificaciones;
+    private final EmailService emailService;
 
     /**
-     * Procesa un evento de tipo "payment" recibido desde MercadoPago.
-     * Consulta el estado real del pago en la API de MP y actua en consecuencia.
+     * Procesa un evento de pago recibido de MercadoPago.
      *
-     * @param mpPaymentIdStr ID del pago en MercadoPago (viene como String del payload)
+     * @param mpPaymentId ID del pago en MercadoPago (viene del webhook)
      */
-    @Transactional
-    public void procesarEventoPago(String mpPaymentIdStr) {
+    public void procesarEventoPago(String mpPaymentId) {
+        log.info("Procesando evento de pago — MP Payment ID: {}", mpPaymentId);
 
-        // 1. Parsear el ID del pago
-        Long mpPaymentId;
         try {
-            mpPaymentId = Long.parseLong(mpPaymentIdStr);
-        } catch (NumberFormatException e) {
-            log.warn("ID de pago no numerico en webhook: '{}'", mpPaymentIdStr);
-            return;
-        }
-
-        // 2. Consultar el estado real del pago en MercadoPago
-        Payment mpPayment;
-        try {
+            // 1. Consultar pago en MercadoPago
             PaymentClient client = new PaymentClient();
-            mpPayment = client.get(mpPaymentId);
-        } catch (MPApiException e) {
-            log.error("MP API Error consultando pago {} — HTTP {}: {}",
-                mpPaymentId, e.getStatusCode(), e.getApiResponse().getContent());
-            return;
-        } catch (MPException e) {
-            log.error("MP SDK Error consultando pago {}: {}", mpPaymentId, e.getMessage());
-            return;
-        }
+            Payment mpPayment = client.get(Long.parseLong(mpPaymentId));
 
-        log.info("Webhook — Pago {} | Status: '{}' | Detail: '{}' | ExternalRef: '{}'",
-            mpPayment.getId(), mpPayment.getStatus(),
-            mpPayment.getStatusDetail(), mpPayment.getExternalReference());
+            log.info("Pago MP consultado — ID: {}, Status: '{}', ExternalRef: '{}'",
+                mpPayment.getId(), mpPayment.getStatus(), mpPayment.getExternalReference());
 
-        // 3. Obtener el external_reference (= suscripcionId en MySQL)
-        String suscripcionId = mpPayment.getExternalReference();
-        if (suscripcionId == null || suscripcionId.isBlank()) {
-            log.warn("Pago {} sin external_reference — no se puede vincular a suscripcion", mpPaymentId);
-            return;
-        }
+            // 2. Buscar pago local por idIntentoPago (el MP payment ID guardado al crear)
+            Optional<Pago> pagoOpt = pagoRepositorio.findByIdIntentoPago(mpPaymentId);
 
-        // 4. Verificar que la suscripcion existe en BD
-        Optional<UsuarioSuscripcion> suscripcionOpt = suscripcionRepositorio.findById(suscripcionId);
-        if (suscripcionOpt.isEmpty()) {
-            log.warn("Suscripcion '{}' del external_reference no existe en BD", suscripcionId);
-            return;
-        }
-        UsuarioSuscripcion suscripcion = suscripcionOpt.get();
-
-        // 5. Procesar segun el estado del pago
-        switch (mpPayment.getStatus()) {
-            case "approved"                  -> manejarPagoAprobado(mpPayment, suscripcion);
-            case "rejected", "cancelled"     -> manejarPagoFallido(mpPayment, suscripcionId);
-            case "refunded", "charged_back"  -> manejarReembolso(mpPayment, suscripcionId);
-            case "pending", "in_process"     ->
-                log.info("Pago {} en estado '{}' — sin accion aun", mpPaymentId, mpPayment.getStatus());
-            default ->
-                log.warn("Estado no reconocido '{}' para pago {}", mpPayment.getStatus(), mpPaymentId);
-        }
-    }
-
-    // ── Manejadores por estado ────────────────────────────────────────────────────
-
-    /**
-     * Aprobado: actualiza el pago, activa la suscripcion y notifica al auth-service.
-     * Idempotente: si ya esta ACTIVA, solo actualiza el pago local si es necesario.
-     */
-    private void manejarPagoAprobado(Payment mpPayment, UsuarioSuscripcion suscripcion) {
-        String  suscripcionId = suscripcion.getId();
-        Integer usuarioId     = suscripcion.getUsuarioId();
-
-        // Actualizar el registro de pago local (puede ya estar COMPLETADO si el
-        // pago fue "approved" en tiempo real desde BricksPaymentServicio)
-        Optional<Pago> pagoOpt = pagoRepositorio
-            .findBySuscripcionIdAndEstado(suscripcionId, EstadoPago.PENDIENTE);
-
-        if (pagoOpt.isPresent()) {
-            Pago pago = pagoOpt.get();
-            pago.setEstado(EstadoPago.COMPLETADO);
-            pago.setIdIntentoPago(mpPayment.getId().toString());
-            pago.setFechaPago(LocalDateTime.now());
-            if (mpPayment.getAuthorizationCode() != null) {
-                pago.setCodigoAutorizacion(mpPayment.getAuthorizationCode());
+            if (pagoOpt.isEmpty()) {
+                // Intentar buscar por external_reference + estado PENDIENTE
+                String externalRef = mpPayment.getExternalReference();
+                if (externalRef != null) {
+                    pagoOpt = pagoRepositorio.findBySuscripcionIdAndEstado(externalRef, EstadoPago.PENDIENTE);
+                }
             }
-            pagoRepositorio.save(pago);
-            log.info("Pago local actualizado a COMPLETADO para suscripcion {}", suscripcionId);
-        } else {
-            // Webhook duplicado o pago ya procesado en tiempo real — es normal
-            log.info("No hay pago PENDIENTE para suscripcion {} — posible webhook duplicado o " +
-                "ya procesado en tiempo real", suscripcionId);
-        }
 
-        // Idempotencia de la suscripcion
-        if (suscripcion.getEstado() == EstadoSuscripcion.ACTIVA) {
-            log.info("Suscripcion {} ya esta ACTIVA — webhook duplicado ignorado", suscripcionId);
-            return;
-        }
+            if (pagoOpt.isEmpty()) {
+                log.warn("No se encontro pago local para MP Payment ID: {} — posiblemente ya fue procesado", mpPaymentId);
+                return;
+            }
 
-        // Activar la suscripcion
-        LocalDateTime ahora = LocalDateTime.now();
-        suscripcion.setEstado(EstadoSuscripcion.ACTIVA);
-        suscripcion.setInicioPeriodoActual(ahora);
-        suscripcion.setFinPeriodoActual(ahora.plusDays(30));
-        suscripcion.setFechaActualizacion(ahora);
-        suscripcionRepositorio.save(suscripcion);
-        log.info("Suscripcion {} activada via webhook para usuario {}", suscripcionId, usuarioId);
+            Pago pagoLocal = pagoOpt.get();
 
-        // Notificar al auth-service via Feign + Consul (best-effort)
-        try {
-            authServicio.actualizarRolPremium(usuarioId);
+            // 3. Si ya esta en estado final, no reprocesar (idempotencia)
+            if (pagoLocal.getEstado() == EstadoPago.COMPLETADO
+                    || pagoLocal.getEstado() == EstadoPago.REEMBOLSADO) {
+                log.info("Pago {} ya en estado final '{}' — ignorando webhook duplicado",
+                    pagoLocal.getId(), pagoLocal.getEstado());
+                return;
+            }
+
+            // 4. Actualizar segun estado de MercadoPago
+            actualizarPagoSegunEstado(pagoLocal, mpPayment);
+
+        } catch (NumberFormatException e) {
+            log.error("MP Payment ID no es numerico: '{}'", mpPaymentId);
+        } catch (MPApiException e) {
+            log.error("Error consultando pago en MercadoPago — HTTP {}: {}",
+                e.getStatusCode(), e.getApiResponse() != null ? e.getApiResponse().getContent() : "sin detalle");
+        } catch (MPException e) {
+            log.error("Error SDK MercadoPago: {}", e.getMessage());
         } catch (Exception e) {
-            // La suscripcion YA fue activada — no revertir. Registrar para revision.
-            log.error("Suscripcion {} activa, pero fallo auth-service para usuario {}. " +
-                "Requiere revision manual. Error: {}", suscripcionId, usuarioId, e.getMessage());
+            log.error("Error procesando evento de pago {}: {}", mpPaymentId, e.getMessage(), e);
         }
     }
 
-    /**
-     * Rechazado / Cancelado: marca el pago FALLIDO.
-     * La suscripcion permanece en PENDIENTE_PAGO para que el usuario intente de nuevo.
-     */
-    private void manejarPagoFallido(Payment mpPayment, String suscripcionId) {
-        pagoRepositorio
-            .findBySuscripcionIdAndEstado(suscripcionId, EstadoPago.PENDIENTE)
-            .ifPresent(pago -> {
-                pago.setEstado(EstadoPago.FALLIDO);
-                pago.setMotivoFallo(mpPayment.getStatusDetail());
-                pagoRepositorio.save(pago);
-                log.info("Pago marcado FALLIDO para suscripcion {} — detalle: '{}'",
-                    suscripcionId, mpPayment.getStatusDetail());
-            });
-    }
+    @Transactional
+    protected void actualizarPagoSegunEstado(Pago pago, Payment mpPayment) {
+        String mpStatus = mpPayment.getStatus();
+        log.info("Actualizando pago {} segun estado de MercadoPago: '{}'", pago.getId(), mpStatus);
 
-    /**
-     * Reembolso / contracargo: marca el pago REEMBOLSADO.
-     * No cancela la suscripcion automaticamente — decision administrativa.
-     */
-    private void manejarReembolso(Payment mpPayment, String suscripcionId) {
-        pagoRepositorio
-            .findByIdIntentoPago(mpPayment.getId().toString())
-            .ifPresent(pago -> {
+        switch (mpStatus) {
+            case "approved" -> {
+                log.info("Pago APROBADO via webhook");
+
+                pago.setEstado(EstadoPago.COMPLETADO);
+                pago.setIdIntentoPago(mpPayment.getId().toString());
+                if (mpPayment.getAuthorizationCode() != null) {
+                    pago.setCodigoAutorizacion(mpPayment.getAuthorizationCode());
+                }
+                pago.setFechaPago(LocalDateTime.now());
+                pagoRepositorio.save(pago);
+
+                log.info("Pago {} actualizado a COMPLETADO", pago.getId());
+
+                if (usuarioSolicitaFacturaPorCorreo(pago)) {
+                    try {
+                        emailService.enviarFacturaPago(pago);
+                    } catch (Exception e) {
+                        log.warn("No se pudo enviar factura por correo (pago {}): {}", pago.getId(), e.getMessage());
+                    }
+                }
+
+                activarSuscripcion(
+                    pago.getSuscripcionId(),
+                    pago.getUsuarioId(),
+                    mpPayment.getId() != null ? mpPayment.getId().toString() : "");
+            }
+
+            case "pending", "in_process" -> {
+                log.info("Pago {} sigue en estado '{}' — sin cambios", pago.getId(), mpStatus);
+            }
+
+            case "rejected", "cancelled" -> {
+                log.info("Pago FALLIDO via webhook");
+                pago.setEstado(EstadoPago.FALLIDO);
+                if (mpPayment.getStatusDetail() != null) {
+                    pago.setMotivoFallo(mpPayment.getStatusDetail());
+                }
+                pagoRepositorio.save(pago);
+            }
+
+            case "refunded", "charged_back" -> {
+                log.info("Pago REEMBOLSADO via webhook");
                 pago.setEstado(EstadoPago.REEMBOLSADO);
                 pagoRepositorio.save(pago);
-                log.info("Pago {} marcado REEMBOLSADO para suscripcion {}", mpPayment.getId(), suscripcionId);
-            });
+            }
+
+            default -> log.warn("Estado de MercadoPago desconocido: '{}'", mpStatus);
+        }
+    }
+
+    private static boolean usuarioSolicitaFacturaPorCorreo(Pago pago) {
+        String m = pago.getMetadatos();
+        return m != null && m.contains(META_RECIBIR_FACTURA);
+    }
+
+    private void activarSuscripcion(String suscripcionId, Integer usuarioId, String mpPaymentId) {
+        try {
+            Optional<UsuarioSuscripcion> suscripcionOpt = suscripcionRepositorio.findById(suscripcionId);
+
+            if (suscripcionOpt.isEmpty()) {
+                log.error("Suscripcion no encontrada: {}", suscripcionId);
+                return;
+            }
+
+            UsuarioSuscripcion suscripcion = suscripcionOpt.get();
+
+            log.info("Activando suscripcion {} — estado actual: {}, plan: {}",
+                suscripcionId, suscripcion.getEstado(), suscripcion.getPlan().getNombre());
+
+            // Solo activar si esta PENDIENTE_PAGO (idempotencia)
+            if (suscripcion.getEstado() == EstadoSuscripcion.PENDIENTE_PAGO) {
+                LocalDateTime now = LocalDateTime.now();
+                suscripcion.setEstado(EstadoSuscripcion.ACTIVA);
+                suscripcion.setInicioPeriodoActual(now);
+                suscripcion.setFinPeriodoActual(now.plusDays(30));
+                suscripcion.setFechaActualizacion(now);
+                suscripcionRepositorio.save(suscripcion);
+                log.info("Suscripcion {} activada exitosamente", suscripcionId);
+
+                // Actualizar rol en auth-service
+                try {
+                    authServicio.actualizarRolPremium(usuarioId);
+                } catch (Exception e) {
+                    log.error("Suscripcion {} activa pero fallo auth-service para usuario {}: {}",
+                        suscripcionId, usuarioId, e.getMessage());
+                }
+
+                try {
+                    servicioNotificaciones.notificarPremiumActivadoWebhook(usuarioId, suscripcionId, mpPaymentId);
+                } catch (Exception e) {
+                    log.warn("No se pudo notificar admin activación premium (webhook): {}", e.getMessage());
+                }
+
+            } else {
+                log.info("Suscripcion {} ya estaba en estado: {} — no se activa de nuevo",
+                    suscripcionId, suscripcion.getEstado());
+            }
+
+        } catch (Exception e) {
+            log.error("Error activando suscripcion {}: {}", suscripcionId, e.getMessage(), e);
+        }
     }
 }

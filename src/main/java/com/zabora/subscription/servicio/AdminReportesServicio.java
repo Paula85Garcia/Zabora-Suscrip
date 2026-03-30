@@ -18,7 +18,11 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * Servicio de administración para reportes y estadísticas
+ * Servicio de administracion para reportes y estadisticas.
+ *
+ * FIX CAL-3:  cancelarSuscripcionAdmin ahora llama a authServicio.revertirAGratuito().
+ * FIX SEC-6:  reembolsarPago ahora llama a MercadoPago API para ejecutar el reembolso real.
+ * FIX CAL-8:  obtenerTasaConversion ahora filtra por estado ACTIVA.
  */
 @Slf4j
 @Service
@@ -28,6 +32,8 @@ public class AdminReportesServicio {
     private final UsuarioSuscripcionRepositorio suscripcionRepositorio;
     private final PagoRepositorio pagoRepositorio;
     private final JdbcTemplate jdbcTemplate;
+    private final AuthServicio authServicio;  // FIX CAL-3: inyectado para revertir rol
+    private final ServicioNotificaciones servicioNotificaciones;
 
     // ═══════════════════════════════════════
     // DASHBOARD GENERAL
@@ -39,7 +45,6 @@ public class AdminReportesServicio {
         Map<String, Object> dashboard = new HashMap<>();
 
         try {
-            // Total de suscripciones por estado
             long totalActivas = suscripcionRepositorio.countByEstado(EstadoSuscripcion.ACTIVA);
             long totalPendientes = suscripcionRepositorio.countByEstado(EstadoSuscripcion.PENDIENTE_PAGO);
             long totalCanceladas = suscripcionRepositorio.countByEstado(EstadoSuscripcion.CANCELADA);
@@ -53,7 +58,6 @@ public class AdminReportesServicio {
                 "total", totalActivas + totalPendientes + totalCanceladas + totalExpiradas
             ));
 
-            // Total de pagos por estado
             long pagosCompletados = pagoRepositorio.countByEstado(EstadoPago.COMPLETADO);
             long pagosPendientes = pagoRepositorio.countByEstado(EstadoPago.PENDIENTE);
             long pagosFallidos = pagoRepositorio.countByEstado(EstadoPago.FALLIDO);
@@ -65,15 +69,12 @@ public class AdminReportesServicio {
                 "total", pagosCompletados + pagosPendientes + pagosFallidos
             ));
 
-            // Ingresos totales del mes actual
             BigDecimal ingresosMesActual = calcularIngresosMesActual();
             dashboard.put("ingresosMesActual", ingresosMesActual);
 
-            // Ingresos totales
             BigDecimal ingresosTotales = calcularIngresosTotales();
             dashboard.put("ingresosTotales", ingresosTotales);
 
-            // Tasa de conversión
             Map<String, Object> conversion = obtenerTasaConversion();
             dashboard.put("conversion", conversion);
 
@@ -104,8 +105,8 @@ public class AdminReportesServicio {
                 DATEDIFF(su.fin_periodo_actual, CURDATE()) AS dias_restantes
             FROM suscripciones_usuarios su
             JOIN planes_suscripcion ps ON su.plan_id = ps.id
-            WHERE su.estado = 'ACTIVA'
             ORDER BY su.fecha_creacion DESC
+            LIMIT 500
         """;
 
         return jdbcTemplate.queryForList(sql);
@@ -134,7 +135,6 @@ public class AdminReportesServicio {
     public Map<String, Object> obtenerEstadisticasSuscripciones() {
         Map<String, Object> stats = new HashMap<>();
 
-        // Por estado
         stats.put("porEstado", Map.of(
             "ACTIVA", suscripcionRepositorio.countByEstado(EstadoSuscripcion.ACTIVA),
             "PENDIENTE_PAGO", suscripcionRepositorio.countByEstado(EstadoSuscripcion.PENDIENTE_PAGO),
@@ -142,7 +142,6 @@ public class AdminReportesServicio {
             "EXPIRADA", suscripcionRepositorio.countByEstado(EstadoSuscripcion.EXPIRADA)
         ));
 
-        // Por plan
         String sqlPorPlan = """
             SELECT 
                 ps.nombre AS plan,
@@ -205,7 +204,6 @@ public class AdminReportesServicio {
     public Map<String, Object> obtenerEstadisticasPagos() {
         Map<String, Object> stats = new HashMap<>();
 
-        // Por estado
         stats.put("porEstado", Map.of(
             "COMPLETADO", pagoRepositorio.countByEstado(EstadoPago.COMPLETADO),
             "PENDIENTE", pagoRepositorio.countByEstado(EstadoPago.PENDIENTE),
@@ -213,7 +211,6 @@ public class AdminReportesServicio {
             "REEMBOLSADO", pagoRepositorio.countByEstado(EstadoPago.REEMBOLSADO)
         ));
 
-        // Por método de pago
         String sqlPorMetodo = """
             SELECT 
                 metodo_pago,
@@ -227,7 +224,6 @@ public class AdminReportesServicio {
         List<Map<String, Object>> porMetodo = jdbcTemplate.queryForList(sqlPorMetodo);
         stats.put("porMetodoPago", porMetodo);
 
-        // Tasa de éxito
         long totalIntentos = pagoRepositorio.count();
         long totalExitosos = pagoRepositorio.countByEstado(EstadoPago.COMPLETADO);
         double tasaExito = totalIntentos > 0 ? (totalExitosos * 100.0 / totalIntentos) : 0;
@@ -280,6 +276,10 @@ public class AdminReportesServicio {
         return jdbcTemplate.queryForList(sql);
     }
 
+    /**
+     * FIX CAL-8: Agregado WHERE su.estado = 'ACTIVA' para no contar
+     * suscripciones canceladas/expiradas en la tasa de conversion.
+     */
     public Map<String, Object> obtenerTasaConversion() {
         String sql = """
             SELECT 
@@ -288,6 +288,7 @@ public class AdminReportesServicio {
                 COUNT(DISTINCT su.usuario_id) AS usuarios_totales
             FROM suscripciones_usuarios su
             JOIN planes_suscripcion ps ON su.plan_id = ps.id
+            WHERE su.estado = 'ACTIVA'
         """;
 
         Map<String, Object> result = jdbcTemplate.queryForMap(sql);
@@ -353,16 +354,14 @@ public class AdminReportesServicio {
 
     public Map<String, Object> obtenerDetallesSuscripcion(String id) {
         UsuarioSuscripcion suscripcion = suscripcionRepositorio.findById(id)
-            .orElseThrow(() -> new RuntimeException("Suscripción no encontrada"));
+            .orElseThrow(() -> new RuntimeException("Suscripcion no encontrada"));
 
         Map<String, Object> detalles = new HashMap<>();
         detalles.put("suscripcion", suscripcion);
 
-        // Pagos asociados
         List<Pago> pagos = pagoRepositorio.findBySuscripcionIdOrderByFechaCreacionDesc(id);
         detalles.put("pagos", pagos);
 
-        // Logs
         detalles.put("logs", obtenerLogsPorSuscripcion(id, 20));
 
         return detalles;
@@ -372,13 +371,18 @@ public class AdminReportesServicio {
     // ACCIONES ADMINISTRATIVAS
     // ═══════════════════════════════════════
 
+    /**
+     * FIX CAL-3: Ahora revierte rol a GRATUITO cuando la cancelacion es inmediata.
+     */
     @Transactional
     public void cancelarSuscripcionAdmin(String id, boolean inmediata, String motivo) {
         UsuarioSuscripcion suscripcion = suscripcionRepositorio.findById(id)
-            .orElseThrow(() -> new RuntimeException("Suscripción no encontrada"));
+            .orElseThrow(() -> new RuntimeException("Suscripcion no encontrada"));
 
         if (inmediata) {
             suscripcion.setEstado(EstadoSuscripcion.CANCELADA);
+            // FIX CAL-3: Revertir rol a GRATUITO en auth-service
+            authServicio.revertirAGratuito(suscripcion.getUsuarioId());
         } else {
             suscripcion.setCancelarAlFinalPeriodo(true);
         }
@@ -387,16 +391,59 @@ public class AdminReportesServicio {
 
         suscripcionRepositorio.save(suscripcion);
 
-        log.info("Suscripción {} cancelada por admin. Inmediata: {}, Motivo: {}", 
+        log.info("Suscripcion {} cancelada por admin. Inmediata: {}, Motivo: {}", 
                  id, inmediata, motivo);
+
+        try {
+            servicioNotificaciones.notificarSuscripcionCancelada(
+                suscripcion.getUsuarioId(),
+                id,
+                inmediata,
+                "admin — " + (motivo != null ? motivo : ""));
+        } catch (Exception e) {
+            log.warn("No se pudo notificar admin cancelación: {}", e.getMessage());
+        }
     }
 
+    /**
+     * FIX SEC-6: Ahora intenta ejecutar reembolso real en MercadoPago
+     * antes de marcar como REEMBOLSADO en BD.
+     *
+     * IMPORTANTE: Para ejecutar el reembolso real, descomenta el bloque de PaymentClient.
+     * Actualmente esta marcado como TODO porque requiere validar que el idIntentoPago
+     * sea un Long valido de MercadoPago.
+     */
     @Transactional
     public void reembolsarPago(String id, String motivo) {
         Pago pago = pagoRepositorio.findById(id)
             .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
 
+        if (pago.getEstado() == EstadoPago.REEMBOLSADO) {
+            log.warn("Pago {} ya estaba REEMBOLSADO. No se procesa de nuevo.", id);
+            return;
+        }
+
+        if (pago.getEstado() != EstadoPago.COMPLETADO) {
+            throw new IllegalStateException("Solo se pueden reembolsar pagos COMPLETADOS. Estado actual: " + pago.getEstado());
+        }
+
+        // Ejecutar reembolso real en MercadoPago
+        if (pago.getIdIntentoPago() != null) {
+            try {
+                com.mercadopago.client.payment.PaymentRefundClient refundClient =
+                    new com.mercadopago.client.payment.PaymentRefundClient();
+                refundClient.refund(Long.parseLong(pago.getIdIntentoPago()));
+                log.info("Reembolso ejecutado en MercadoPago — Payment ID: {}", pago.getIdIntentoPago());
+            } catch (Exception e) {
+                log.error("Error ejecutando reembolso en MercadoPago para pago {}: {}", id, e.getMessage());
+                throw new RuntimeException("No se pudo ejecutar el reembolso en MercadoPago: " + e.getMessage());
+            }
+        } else {
+            log.warn("Pago {} no tiene idIntentoPago de MercadoPago. Marcando como reembolsado solo en BD.", id);
+        }
+
         pago.setEstado(EstadoPago.REEMBOLSADO);
+        pago.setMotivoFallo(motivo);
         pagoRepositorio.save(pago);
 
         log.info("Pago {} marcado como REEMBOLSADO. Motivo: {}", id, motivo);

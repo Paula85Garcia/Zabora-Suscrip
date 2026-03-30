@@ -12,13 +12,11 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * DTO que recibe el frontend después de que el Brick captura los datos de tarjeta.
+ * DTO que recibe el frontend despues de que el Brick captura los datos de tarjeta.
  *
  * externalReference = ID de la suscripcion en MySQL (UsuarioSuscripcion.id).
  * MercadoPago lo almacena en el pago y lo devuelve en el webhook, por eso es
  * el nexo entre el evento de pago y la suscripcion local.
- *
- * NO incluye back_urls ni preference_id (esos son del flujo viejo de Checkout Pro).
  */
 @Data
 @Builder
@@ -64,4 +62,7 @@ public class BricksPaymentDTO {
 
     /** Descripcion que aparece en el resumen del banco del comprador. */
     private String description;
+
+    /** Si el usuario solicita recibir comprobante/factura por correo (persistido en el pago). */
+    private Boolean recibirFactura;
 }

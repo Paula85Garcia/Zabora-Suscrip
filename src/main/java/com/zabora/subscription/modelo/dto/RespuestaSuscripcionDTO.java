@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -18,6 +19,9 @@ public class RespuestaSuscripcionDTO {
     private String idSuscripcion;
     private String plan;
     private String estado;
+
+    /** Precio del plan asociado (COP), para checkout sin valores fijos en el cliente */
+    private BigDecimal precioPlan;
 
     private LocalDateTime fechaInicio;
     private LocalDateTime fechaExpiracion;

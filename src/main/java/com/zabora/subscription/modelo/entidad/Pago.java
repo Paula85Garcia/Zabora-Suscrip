@@ -11,7 +11,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Entidad que representa un pago realizado por un usuario
+ * Entidad que representa un pago realizado por un usuario.
+ *
+ * FIX BUG-7: Eliminados todos los getters/setters manuales — @Data los genera.
  */
 @Entity
 @Table(name = "pagos")
@@ -37,14 +39,14 @@ public class Pago {
     private String moneda = "COP";
 
     @Column(name = "metodo_pago", nullable = false)
-    private String metodoPago;  // "TARJETA_CREDITO" o "PSE"
+    private String metodoPago;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
     private EstadoPago estado = EstadoPago.PENDIENTE;
 
     @Column(name = "id_intento_pago", unique = true, length = 255)
-    private String idIntentoPago;  // Preference ID de MercadoPago
+    private String idIntentoPago;
 
     @Column(name = "fecha_pago")
     private LocalDateTime fechaPago;
@@ -82,65 +84,4 @@ public class Pago {
     @CreationTimestamp
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
-
-    // Getters y Setters manuales
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getSuscripcionId() { return suscripcionId; }
-    public void setSuscripcionId(String suscripcionId) { this.suscripcionId = suscripcionId; }
-
-    public Integer getUsuarioId() { return usuarioId; }
-    public void setUsuarioId(Integer usuarioId) { this.usuarioId = usuarioId; }
-
-    public BigDecimal getMonto() { return monto; }
-    public void setMonto(BigDecimal monto) { this.monto = monto; }
-
-    public String getMoneda() { return moneda; }
-    public void setMoneda(String moneda) { this.moneda = moneda; }
-
-    public String getMetodoPago() { return metodoPago; }
-    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
-
-    public EstadoPago getEstado() { return estado; }
-    public void setEstado(EstadoPago estado) { this.estado = estado; }
-
-    public String getIdIntentoPago() { return idIntentoPago; }
-    public void setIdIntentoPago(String idIntentoPago) { this.idIntentoPago = idIntentoPago; }
-
-    public LocalDateTime getFechaPago() { return fechaPago; }
-    public void setFechaPago(LocalDateTime fechaPago) { this.fechaPago = fechaPago; }
-
-    public String getUrlComprobante() { return urlComprobante; }
-    public void setUrlComprobante(String urlComprobante) { this.urlComprobante = urlComprobante; }
-
-    public String getCodigoAutorizacion() { return codigoAutorizacion; }
-    public void setCodigoAutorizacion(String codigoAutorizacion) { this.codigoAutorizacion = codigoAutorizacion; }
-
-    public String getEstadoPse() { return estadoPse; }
-    public void setEstadoPse(String estadoPse) { this.estadoPse = estadoPse; }
-
-    public String getReferenciaPse() { return referenciaPse; }
-    public void setReferenciaPse(String referenciaPse) { this.referenciaPse = referenciaPse; }
-
-    public String getMetadatos() { return metadatos; }
-    public void setMetadatos(String metadatos) { this.metadatos = metadatos; }
-
-    public String getMotivoFallo() { return motivoFallo; }
-    public void setMotivoFallo(String motivoFallo) { this.motivoFallo = motivoFallo; }
-
-    public String getTipoDocumento() { return tipoDocumento; }
-    public void setTipoDocumento(String tipoDocumento) { this.tipoDocumento = tipoDocumento; }
-
-    public String getNumeroDocumento() { return numeroDocumento; }
-    public void setNumeroDocumento(String numeroDocumento) { this.numeroDocumento = numeroDocumento; }
-
-    public String getBanco() { return banco; }
-    public void setBanco(String banco) { this.banco = banco; }
-
-    public String getTipoPersona() { return tipoPersona; }
-    public void setTipoPersona(String tipoPersona) { this.tipoPersona = tipoPersona; }
-
-    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
-    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 }

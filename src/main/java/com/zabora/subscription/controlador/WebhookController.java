@@ -15,11 +15,6 @@ import java.util.Map;
  *  1. Siempre responde 200 OK para evitar reintentos de MP que saturarian el servicio.
  *  2. Toda la logica de negocio vive en WebhookPagoServicio.
  *  3. Este controller es sin estado y reentrante.
- *
- * REEMPLAZA los dos MercadoPagoWebhookController que habia en el proyecto.
- *
- * Payload tipico de MP:
- *  { "type": "payment", "action": "payment.updated", "data": { "id": "1234567890" } }
  */
 @Slf4j
 @RestController
@@ -53,7 +48,6 @@ public class WebhookController {
             }
 
         } catch (Exception e) {
-            // Capturamos todo para garantizar 200 al final y evitar reintentos de MP
             log.error("Error procesando webhook: {}", e.getMessage(), e);
         }
 
@@ -68,12 +62,7 @@ public class WebhookController {
         ));
     }
 
-    /**
-     * Extrae el ID del pago del payload o del query param.
-     * MP puede enviarlo de distintas formas segun la version del evento.
-     */
     private String extraerPaymentId(Map<String, Object> payload, String idParam) {
-        // Forma principal: { "data": { "id": "123" } }
         Object dataObj = payload.get("data");
         if (dataObj instanceof Map<?, ?> data) {
             Object idObj = data.get("id");
@@ -82,10 +71,8 @@ public class WebhookController {
                 if (!id.isBlank() && !"null".equals(id)) return id;
             }
         }
-        // Forma alternativa: query param ?id=123 (envios de prueba de MP)
         if (idParam != null && !idParam.isBlank()) return idParam;
 
-        // Forma legacy: { "id": "123" } directamente en el body
         Object rootId = payload.get("id");
         if (rootId != null) {
             String id = String.valueOf(rootId);

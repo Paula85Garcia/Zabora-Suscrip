@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 /**
  * Manejo centralizado de excepciones del servicio de suscripciones.
- * Reemplaza el GlobalExceptionHandler anterior añadiendo los nuevos tipos de dominio.
  */
 @Slf4j
 @ControllerAdvice
@@ -46,9 +45,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthServiceException.class)
     public ResponseEntity<Map<String, Object>> handleAuthService(AuthServiceException ex) {
-        // El auth-service fallo DESPUES de que la suscripcion ya se activo en BD.
-        // Respondemos 200 para no alarmar al usuario — la suscripcion esta activa.
-        // El rol se corregira manualmente o en el siguiente intento de login.
         log.error("Auth-service error (no critico para el usuario): {}", ex.getMessage());
         return ResponseEntity.ok(Map.of(
             "success", true,

@@ -2,20 +2,19 @@ package com.zabora.subscription.config;
 
 import com.mercadopago.MercadoPagoConfig;
 import jakarta.annotation.PostConstruct;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Inicializa el SDK de MercadoPago una sola vez al arrancar.
- * El access token se configura globalmente y todos los clientes
- * (PreferenceClient, PaymentClient) lo usan automaticamente.
+ * Inicializa el SDK de MercadoPago con el access token configurado.
+ *
+ * El access token se lee de application.yml:
+ *   mercadopago.access-token=APP_USR-...
  */
+@Slf4j
 @Configuration
 public class MercadoPagoConfiguration {
-
-    private static final Logger log = LoggerFactory.getLogger(MercadoPagoConfiguration.class);
 
     @Value("${mercadopago.access-token}")
     private String accessToken;
@@ -23,7 +22,6 @@ public class MercadoPagoConfiguration {
     @PostConstruct
     public void init() {
         MercadoPagoConfig.setAccessToken(accessToken);
-        log.info("MercadoPago SDK inicializado. Token termina en: ...{}",
-            accessToken.substring(Math.max(0, accessToken.length() - 6)));
+        log.info("MercadoPago SDK inicializado correctamente");
     }
 }

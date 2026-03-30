@@ -3,6 +3,7 @@ package com.zabora.subscription.controlador;
 import com.zabora.subscription.data.UserContext;
 import com.zabora.subscription.excepcion.PagoRechazadoException;
 import com.zabora.subscription.modelo.dto.BricksPaymentDTO;
+import com.zabora.subscription.modelo.dto.BricksPsePaymentDTO;
 import com.zabora.subscription.servicio.BricksPaymentServicio;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,17 +14,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**
  * Endpoints del flujo de pago con MercadoPago Checkout Bricks.
  *
  * Expone:
- *   GET  /api/pagos/bricks/public-key  → public key para inicializar el Brick en frontend
- *   POST /api/pagos/bricks/pay         → procesa el pago con el token del Brick
- *
- * Los endpoints /preference y /process del PagoBricksController anterior
- * quedan ELIMINADOS — pertenecian al flujo viejo de Checkout Pro.
+ *   GET  /api/pagos/bricks/public-key  -> public key para inicializar el Brick en frontend
+ *   POST /api/pagos/bricks/pay         -> procesa el pago con el token del Brick
  */
 @Slf4j
 @RestController
@@ -37,9 +36,6 @@ public class BricksPaymentController {
     @Value("${mercadopago.public-key}")
     private String publicKey;
 
-    /**
-     * Devuelve la public key de MercadoPago para inicializar el Brick en el frontend.
-     */
     @GetMapping("/public-key")
     @Operation(summary = "Obtener public key de MercadoPago")
     public ResponseEntity<Map<String, String>> obtenerPublicKey() {
@@ -47,24 +43,6 @@ public class BricksPaymentController {
         return ResponseEntity.ok(Map.of("publicKey", publicKey));
     }
 
-    /**
-     * Procesa el pago con el token capturado por el Brick.
-     *
-     * El frontend llama a este endpoint DESPUES de que el Brick tokenizo la tarjeta.
-     * El PAN (numero de tarjeta) nunca llega al backend — solo el token.
-     *
-     * Body esperado:
-     * {
-     *   "token":               "ff8080814c11e237...",
-     *   "paymentMethodId":     "visa",
-     *   "issuerId":            "24",        <- puede ser null
-     *   "installments":        1,
-     *   "payerEmail":          "user@test.com",
-     *   "externalReference":   "uuid-de-la-suscripcion-en-mysql",
-     *   "transactionAmount":   29900.00,
-     *   "description":         "Suscripcion Premium Zabora"
-     * }
-     */
     @PostMapping("/pay")
     @Operation(
         summary = "Procesar pago con Bricks",
@@ -109,17 +87,70 @@ public class BricksPaymentController {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────────
+    @PostMapping("/pay-pse")
+    @Operation(
+        summary = "Procesar pago PSE con Bricks",
+        description = "Crea el pago PSE en Mercado Pago. La respuesta puede incluir redirectUrl para abrir el banco."
+    )
+    public ResponseEntity<?> procesarPagoPse(
+            @Valid @RequestBody BricksPsePaymentDTO dto,
+            HttpServletRequest request) {
+        Integer usuarioId = obtenerUsuarioId();
+        if (usuarioId == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Usuario no autenticado"));
+        }
+
+        String clientIp = resolverIpCliente(request);
+        log.info("Procesando pago PSE Bricks — usuario: {}, suscripcion: {}", usuarioId, dto.getExternalReference());
+
+        try {
+            Map<String, Object> resultado = bricksPaymentServicio.procesarPagoPse(dto, usuarioId, clientIp);
+            return ResponseEntity.ok(resultado);
+
+        } catch (PagoRechazadoException e) {
+            log.warn("Pago PSE rechazado — usuario: {}, detalle: '{}'", usuarioId, e.getStatusDetail());
+            return ResponseEntity.status(422).body(Map.of(
+                "error",       "Pago rechazado",
+                "statusDetail", e.getStatusDetail(),
+                "mpPaymentId",  e.getMpPaymentId(),
+                "message",      traducirRechazo(e.getStatusDetail())
+            ));
+
+        } catch (SecurityException e) {
+            log.warn("Acceso denegado — usuario: {}: {}", usuarioId, e.getMessage());
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
+
+        } catch (IllegalStateException e) {
+            log.warn("Estado invalido — usuario: {}: {}", usuarioId, e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+
+        } catch (Exception e) {
+            log.error("Error inesperado PSE — usuario: {}: {}", usuarioId, e.getMessage(), e);
+            String hint = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+            return ResponseEntity.internalServerError().body(Map.of(
+                "error", "Error interno al procesar el pago PSE. Intenta nuevamente.",
+                "message", hint
+            ));
+        }
+    }
+
+    private static String resolverIpCliente(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        String real = request.getHeader("X-Real-IP");
+        if (real != null && !real.isBlank()) {
+            return real.trim();
+        }
+        return request.getRemoteAddr();
+    }
 
     private Integer obtenerUsuarioId() {
         var userData = UserContext.get();
         return (userData != null) ? userData.getUserId() : null;
     }
 
-    /**
-     * Traduce los status_detail de MP a mensajes amigables en espanol.
-     * Referencia: https://www.mercadopago.com.co/developers/es/docs/checkout-api/response-handling/collection-results
-     */
     private String traducirRechazo(String statusDetail) {
         if (statusDetail == null) return "Tu pago no pudo ser procesado. Intenta con otro medio de pago.";
         return switch (statusDetail) {
