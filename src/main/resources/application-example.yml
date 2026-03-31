@@ -1,7 +1,7 @@
 # =============================================================================
 # Zabora Subscription Service — EJEMPLO (sin secretos reales)
-# Copia como referencia o fusiona con tu application.yml local.
-# Recomendado: usar variables de entorno (ver .env.example en la raíz del módulo).
+# El application.yml “principal” del repo está alineado con este archivo (placeholders).
+# Secretos: variables de entorno o application-local.yml (gitignored). Ver .env.example.
 # =============================================================================
 
 spring:
