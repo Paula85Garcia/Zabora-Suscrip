@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.005" tests="10" errors="0" skipped="10" failures="0">
+  <properties/>
+  <testcase name="paso01_planes" classname="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+    <system-out><![CDATA[18:18:36.651 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Loaded org.testcontainers.dockerclient.NpipeSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+18:18:36.658 [main] INFO org.testcontainers.dockerclient.DockerMachineClientProviderStrategy -- docker-machine executable was not found on PATH ([C:\Program Files\Eclipse Adoptium\jdk-21.0.8.9-hotspot\bin, C:\Program Files\Common Files\Oracle\Java\javapath, C:\WINDOWS\system32, C:\WINDOWS, C:\WINDOWS\System32\Wbem, C:\WINDOWS\System32\WindowsPowerShell\v1.0\, C:\WINDOWS\System32\OpenSSH\, C:\Program Files\Docker\Docker\resources\bin, C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\, C:\Program Files\dotnet\, C:\Program Files\Git\cmd, C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\, C:\Program Files\Microsoft SQL Server\150\Tools\Binn\, C:\Program Files\nodejs\, C:\apache-maven-3.9.11\bin, C:\stripe, C:\Users\PAULA\AppData\Local\Microsoft\WindowsApps, C:\Users\PAULA\AppData\Local\Programs\Microsoft VS Code\bin, C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2025.1.1.1\bin, , C:\Program Files\MongoDB\Server\8.0\bin, C:\Program Files\MongoDB\mongosh-2.5.7-win32-x64\bin, C:\Users\PAULA\.dotnet\tools, C:\Users\PAULA\AppData\Roaming\npm, C:\Users\PAULA\AppData\Local\PowerToys\, C:\Program Files\MySQL\MySQL Server 8.0\bin, C:\apache-maven-3.9.12\bin, C:\stripe, C:\Users\PAULA\AppData\Local\Programs\cursor\resources\app\bin, C:\Users\PAULA\AppData\Local\Programs\Windsurf\bin])
+18:18:36.658 [main] ERROR org.testcontainers.dockerclient.DockerClientProviderStrategy -- Could not find a valid Docker environment. Please check configuration. Attempted configurations were:
+As no valid configuration was found, execution cannot continue.
+See https://java.testcontainers.org/on_failure.html for more details.
+]]></system-out>
+  </testcase>
+  <testcase name="paso02_suscribirGratis" classname="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+  </testcase>
+  <testcase name="paso03_estadoGratis" classname="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+  </testcase>
+  <testcase name="paso04_premiumPendiente" classname="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+  </testcase>
+  <testcase name="paso05_publicKeyBricks" classname="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+  </testcase>
+  <testcase name="paso06_misPagos" classname="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+  </testcase>
+  <testcase name="paso07_cancelarGratis" classname="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+  </testcase>
+  <testcase name="paso08_adminDashboard" classname="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+  </testcase>
+  <testcase name="paso09_webhookPing" classname="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+  </testcase>
+  <testcase name="paso10_webhookPost" classname="com.zabora.subscription.integration.controller.FlujoCompletoSimuladoIT" time="0.0">
+    <skipped message="disabledWithoutDocker is true and Docker is not available"/>
+  </testcase>
+</testsuite>

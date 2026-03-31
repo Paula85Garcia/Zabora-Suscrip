@@ -10,6 +10,7 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -47,7 +48,8 @@ class WebhookControladorIntegrationTest extends BaseIntegrationTest {
                 .get("/api/webhooks/mercadopago")
         .then()
                 .statusCode(200)
-                .body(equalTo("Webhook activo"));
+                .body("status", equalTo("activo"))
+                .body("servicio", notNullValue());
     }
 
     // ========== TEST 2: SIMULAR PAGO APROBADO ==========
