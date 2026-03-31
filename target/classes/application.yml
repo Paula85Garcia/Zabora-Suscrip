@@ -1,9 +1,6 @@
-# =============================================================================
-# Zabora Subscription Service — configuración por ENTORNO (sin secretos en repo)
-# Define variables en el sistema, .env cargado por tu IDE, Docker o systemd.
-# Ver: .env.example y application-example.yml
-# Desarrollo local opcional: application-local.yml (gitignored) con overrides.
-# =============================================================================
+# ========================================
+# ZABORA - CONFIGURACIÓN MERCADOPAGO
+# ========================================
 
 spring:
   application:
@@ -12,26 +9,23 @@ spring:
   cloud:
     consul:
       enabled: true
-      host: ${CONSUL_HOST:localhost}
-      port: ${CONSUL_PORT:8500}
+      host: localhost
+      port: 8500
       discovery:
         prefer-ip-address: true
-        service-name: zabora-subscription-service
-        health-check-path: /actuator/health
-        health-check-interval: 10s
       config:
         enabled: false
 
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/zabora_subscriptions?sslMode=DISABLED&allowPublicKeyRetrieval=true}
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:}
+    url: jdbc:mysql://localhost:3306/zabora_subscriptions?sslMode=REQUIRED&allowPublicKeyRetrieval=true
+    username: root
+    password: Yulia280719**
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:update}
-    show-sql: ${JPA_SHOW_SQL:false}
+      ddl-auto: update
+    show-sql: true
     open-in-view: false
     properties:
       hibernate:
@@ -41,10 +35,10 @@ spring:
           time_zone: America/Bogota
 
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    host: smtp.gmail.com
+    port: 587
+    username: zaborapayment@gmail.com
+    password: pvrbddmghsgktvfe
     properties:
       mail:
         smtp:
@@ -56,47 +50,46 @@ spring:
           protocol: smtp
 
 server:
-  port: ${PORT:8004}
+  port: 8004
   shutdown: graceful
   error:
     include-message: always
     include-binding-errors: always
 
+# ========================================
+# MERCADOPAGO CONFIGURATION
+# ========================================
+#mercadopago:
+ # access-token: TEST-6541386271619-022410-5b4025c5ab0255f05846d51533694260-3223648585
+  #public-key: TEST-01677c07-6b61-4718-9d81-78123be19879
+  #webhook:
+   # secret:  2dcae227e6d2264336f738e84a6b14d61f76f826c49851c9ae2787ffcad4d2c1
+  #notification-url: https://prepiously-gestureless-rosita.ngrok-free.dev/api/pagos/webhook
+  #success-url: https://prepiously-gestureless-rosita.ngrok-free.dev/pago-exitoso
+#failure-url: https://prepiously-gestureless-rosita.ngrok-free.dev/pago-fallido
+#pending-url: https://prepiously-gestureless-rosita.ngrok-free.dev/pago-pendiente
+  #success-url: https://www.mercadopago.com.co/checkout/success
+  #failure-url: https://www.mercadopago.com.co/checkout/failure
+  #pending-url: https://www.mercadopago.com.co/checkout/pending
+# ========================================
+# MERCADOPAGO CONFIGURATION
+# ========================================
 mercadopago:
-  access-token: ${MP_ACCESS_TOKEN:}
-  public-key: ${MP_PUBLIC_KEY:}
-  environment: ${MP_ENVIRONMENT:test}
+  access-token: APP_USR-5585734670493828-032008-e4efc029c41dd57bc3a017df30314c9d-3223648585
+  public-key: APP_USR-ec81463d-913f-4b19-9d79-f21b4e0c615e
   webhook:
-    secret: ${MP_WEBHOOK_SECRET:}
-    notification-url: ${MP_WEBHOOK_NOTIFICATION_URL:https://tu-dominio/api/webhooks/mercadopago}
-  success-url: ${MP_SUCCESS_URL:http://localhost:4200/suscripciones/exito}
-  failure-url: ${MP_FAILURE_URL:http://localhost:4200/suscripciones/checkout?payment=failure}
-  pending-url: ${MP_PENDING_URL:http://localhost:4200/suscripciones/checkout?payment=pending}
+    secret: 2dcae227e6d2264336f738e84a6b14d61f76f826c49851c9ae2787ffcad4d2c1
+  notification-url: https://prepiously-gestureless-rosita.ngrok-free.dev/api/webhooks/mercadopago
+  success-url: https://prepiously-gestureless-rosita.ngrok-free.dev/pago-exitoso
+  failure-url: https://prepiously-gestureless-rosita.ngrok-free.dev/pago-fallido
+  pending-url: https://prepiously-gestureless-rosita.ngrok-free.dev/pago-pendiente
 
+# Email configuration
 email:
-  enabled: ${EMAIL_ENABLED:false}
-  from: ${EMAIL_FROM:noreply@example.com}
-  send-factura: ${EMAIL_SEND_FACTURA:true}
-  admin-notifications-enabled: ${EMAIL_ADMIN_NOTIFY:false}
-  admin-recipients: ${EMAIL_ADMIN_RECIPIENTS:}
+  enabled: true
+  from: zaborapayment@gmail.com
 
-zabora:
-  subscription:
-    jwt:
-      secret: ${JWT_SECRET:}
-
-feign:
-  client:
-    config:
-      default:
-        connectTimeout: 10000
-        readTimeout: 30000
-        loggerLevel: ${FEIGN_LOGGER_LEVEL:FULL}
-      auth-service:
-        connectTimeout: 10000
-        readTimeout: 30000
-        loggerLevel: ${FEIGN_LOGGER_LEVEL:FULL}
-
+# Swagger/OpenAPI
 springdoc:
   api-docs:
     enabled: true
@@ -105,15 +98,16 @@ springdoc:
     enabled: true
     path: /swagger-ui.html
 
+# Logging
 logging:
   level:
     root: INFO
-    com.zabora.subscription: ${LOG_LEVEL_SUBSCRIPTION:INFO}
+    com.zabora.subscription: DEBUG
     org.springframework.web: INFO
-    org.hibernate.SQL: ${LOG_LEVEL_SQL:WARN}
-    feign: ${LOG_LEVEL_FEIGN:INFO}
-    org.springframework.cloud.openfeign: ${LOG_LEVEL_FEIGN:INFO}
+    org.hibernate.SQL: DEBUG
+    com.mercadopago: DEBUG
 
+# Actuator
 management:
   endpoints:
     web:
@@ -121,9 +115,7 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: when_authorized
-      mail:
-        enabled: false
+      show-details: always
 
 app:
-  mode: ${APP_MODE:development}
+  mode: development

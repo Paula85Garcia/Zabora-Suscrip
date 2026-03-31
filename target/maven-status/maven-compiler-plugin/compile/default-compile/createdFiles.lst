@@ -4,6 +4,7 @@ com\zabora\subscription\controlador\SuscripcionController.class
 com\zabora\subscription\controlador\WebhookController.class
 com\zabora\subscription\modelo\entidad\PlanSuscripcion.class
 com\zabora\subscription\modelo\enumeracion\RolUsuario.class
+com\zabora\subscription\controlador\AdminController.class
 com\zabora\subscription\excepcion\PagoRechazadoException.class
 com\zabora\subscription\servicio\AuthServicio.class
 com\zabora\subscription\data\UserContextFilter.class
@@ -24,6 +25,7 @@ com\zabora\subscription\config\SchedulingConfig.class
 com\zabora\subscription\modelo\dto\SolicitudSuscripcionDTO.class
 com\zabora\subscription\data\UserData.class
 com\zabora\subscription\modelo\dto\ReporteIngresosMensualDTO$ReporteIngresosMensualDTOBuilder.class
+com\zabora\subscription\data\BearerJwtUserContextFallback.class
 com\zabora\subscription\data\UserContext.class
 com\zabora\subscription\ZaboraSubscriptionApplication.class
 com\zabora\subscription\servicio\SuscripcionServicio.class
@@ -39,6 +41,7 @@ com\zabora\subscription\modelo\dto\PseRequest.class
 com\zabora\subscription\repositorio\PagoRepositorio.class
 com\zabora\subscription\modelo\dto\ErrorDTO$ErrorDTOBuilder.class
 com\zabora\subscription\servicio\WebhookPagoServicio.class
+com\zabora\subscription\controlador\PagosController.class
 com\zabora\subscription\servicio\SuscripcionScheduler.class
 com\zabora\subscription\modelo\dto\PseRequest$PseRequestBuilder.class
 com\zabora\subscription\excepcion\AuthServiceException.class
@@ -49,9 +52,11 @@ com\zabora\subscription\modelo\entidad\PlanSuscripcion$PlanSuscripcionBuilder.cl
 com\zabora\subscription\modelo\dto\CrearPagoBricksRequest$CrearPagoBricksRequestBuilder.class
 com\zabora\subscription\modelo\dto\CrearPagoBricksRequest.class
 com\zabora\subscription\modelo\dto\RespuestaVerificacionDTO.class
+com\zabora\subscription\modelo\dto\BricksPsePaymentDTO$BricksPsePaymentDTOBuilder.class
 com\zabora\subscription\modelo\dto\BricksPaymentDTO.class
 com\zabora\subscription\modelo\dto\BricksPaymentDTO$BricksPaymentDTOBuilder.class
 com\zabora\subscription\config\SecurityConfig.class
+com\zabora\subscription\modelo\dto\BricksPsePaymentDTO.class
 com\zabora\subscription\modelo\enumeracion\TipoMetodoPago.class
 com\zabora\subscription\modelo\dto\RespuestaPagoDTO$RespuestaPagoDTOBuilder.class
 com\zabora\subscription\modelo\dto\SolicitudPagoDTO.class

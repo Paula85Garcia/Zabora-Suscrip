@@ -1,7 +1,7 @@
-C:\zabora\suscription-service\src\test\java\com\zabora\subscription\integration\BaseIntegrationTest.java
-C:\zabora\suscription-service\src\test\java\com\zabora\subscription\integration\config\MockMercadoPagoConfig.java
-C:\zabora\suscription-service\src\test\java\com\zabora\subscription\integration\config\TestDataFactory.java
-C:\zabora\suscription-service\src\test\java\com\zabora\subscription\integration\controller\FlujoCompletoSimuladoIT.java
-C:\zabora\suscription-service\src\test\java\com\zabora\subscription\integration\controller\SuscripcionControladorIntegrationTest.java
-C:\zabora\suscription-service\src\test\java\com\zabora\subscription\integration\controller\WebhookControladorIntegrationTest.java
-C:\zabora\suscription-service\src\test\java\com\zabora\subscription\integration\TestDataInitializer.java
+C:\ServiciosZaboraFinal\suscription-service\src\test\java\com\zabora\subscription\integration\BaseIntegrationTest.java
+C:\ServiciosZaboraFinal\suscription-service\src\test\java\com\zabora\subscription\integration\config\MockMercadoPagoConfig.java
+C:\ServiciosZaboraFinal\suscription-service\src\test\java\com\zabora\subscription\integration\config\TestDataFactory.java
+C:\ServiciosZaboraFinal\suscription-service\src\test\java\com\zabora\subscription\integration\controller\FlujoCompletoSimuladoIT.java
+C:\ServiciosZaboraFinal\suscription-service\src\test\java\com\zabora\subscription\integration\controller\SuscripcionControladorIntegrationTest.java
+C:\ServiciosZaboraFinal\suscription-service\src\test\java\com\zabora\subscription\integration\controller\WebhookControladorIntegrationTest.java
+C:\ServiciosZaboraFinal\suscription-service\src\test\java\com\zabora\subscription\integration\TestDataInitializer.java

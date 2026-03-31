@@ -1,5 +1,7 @@
 com\zabora\subscription\integration\config\TestDataFactory.class
 com\zabora\subscription\integration\config\MockMercadoPagoConfig.class
+com\zabora\subscription\integration\controller\WebhookControladorIntegrationTest.class
 com\zabora\subscription\integration\BaseIntegrationTest.class
 com\zabora\subscription\integration\controller\SuscripcionControladorIntegrationTest.class
+com\zabora\subscription\integration\controller\FlujoCompletoSimuladoIT.class
 com\zabora\subscription\integration\TestDataInitializer.class
