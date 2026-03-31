@@ -1,0 +1,39 @@
+# Perfil "test": usado con @ActiveProfiles("test") + Testcontainers (MySQL).
+spring:
+  cloud:
+    consul:
+      enabled: false
+    discovery:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+mercadopago:
+  access-token: TEST_ACCESS_TOKEN
+  public-key: TEST_PUBLIC_KEY
+  environment: test
+  success-url: http://localhost:4200/suscripciones/exito
+  failure-url: http://localhost:4200/suscripciones/checkout?payment=failure
+  pending-url: http://localhost:4200/suscripciones/checkout?payment=pending
+  webhook:
+    notification-url: http://localhost:8080/api/webhooks/mercadopago
+    secret: test-webhook-secret
+
+email:
+  enabled: false
+  send-factura: false
+  admin-notifications-enabled: false
+  admin-recipients: ""
+
+zabora:
+  subscription:
+    jwt:
+      secret: ${JWT_SECRET:TUlfQ0xBVkVfU0VDUkVUQV8zMl9CWVRFU19NSU5JTU8=}
+
+logging:
+  level:
+    com.zabora.subscription: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN

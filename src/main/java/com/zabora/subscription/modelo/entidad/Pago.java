@@ -11,7 +11,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Entidad que representa un pago realizado por un usuario
+ * Entidad que representa un pago realizado por un usuario.
+ *
+ * FIX BUG-7: Eliminados todos los getters/setters manuales — @Data los genera.
  */
 @Entity
 @Table(name = "pagos")
@@ -37,14 +39,14 @@ public class Pago {
     private String moneda = "COP";
 
     @Column(name = "metodo_pago", nullable = false)
-    private String metodoPago;  // "TARJETA_CREDITO" o "PSE"
+    private String metodoPago;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
     private EstadoPago estado = EstadoPago.PENDIENTE;
 
     @Column(name = "id_intento_pago", unique = true, length = 255)
-    private String idIntentoPago;  // Preference ID de MercadoPago
+    private String idIntentoPago;
 
     @Column(name = "fecha_pago")
     private LocalDateTime fechaPago;
@@ -63,6 +65,21 @@ public class Pago {
 
     @Column(name = "metadatos", columnDefinition = "LONGTEXT")
     private String metadatos;
+
+    @Column(name = "motivo_fallo", length = 500)
+    private String motivoFallo;
+
+    @Column(name = "tipo_documento", length = 20)
+    private String tipoDocumento;
+
+    @Column(name = "numero_documento", length = 50)
+    private String numeroDocumento;
+
+    @Column(name = "banco", length = 50)
+    private String banco;
+
+    @Column(name = "tipo_persona", length = 20)
+    private String tipoPersona;
 
     @CreationTimestamp
     @Column(name = "fecha_creacion", nullable = false, updatable = false)

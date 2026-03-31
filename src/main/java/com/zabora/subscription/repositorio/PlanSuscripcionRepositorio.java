@@ -8,25 +8,17 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repositorio para operaciones de la entidad PlanSuscripcion
+ * Repositorio para operaciones de la entidad PlanSuscripcion.
+ *
+ * FIX BUG-6: Cambiado de JpaRepository<PlanSuscripcion, Long> a Integer.
+ *            PlanSuscripcion.id es Integer, no Long.
  */
 @Repository
-public interface PlanSuscripcionRepositorio extends JpaRepository<PlanSuscripcion, Long> {
-    
-    /**
-     * Buscar un plan por nombre (ignorando mayúsculas y minúsculas)
-     * Ejemplo: "premium", "gratuito"
-     */
+public interface PlanSuscripcionRepositorio extends JpaRepository<PlanSuscripcion, Integer> {
+
     Optional<PlanSuscripcion> findByNombreIgnoreCase(String nombre);
-    
-    /**
-     * Buscar todos los planes activos
-     * Utilizado para mostrar los planes disponibles a los usuarios
-     */
+
     List<PlanSuscripcion> findByActivoTrue();
-    
-    /**
-     * Verificar si existe un plan por nombre (ignorando mayúsculas y minúsculas)
-     */
+
     boolean existsByNombreIgnoreCase(String nombre);
 }

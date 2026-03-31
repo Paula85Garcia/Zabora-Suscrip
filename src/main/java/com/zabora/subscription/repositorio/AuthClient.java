@@ -1,23 +1,30 @@
 package com.zabora.subscription.repositorio;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "auth-service", url = "http://localhost:8000")
+import java.util.Map;
+
+/**
+ * Cliente Feign para comunicarse con el auth-service.
+ *
+ * El auth-service expone en /api/upgrade:
+ *   POST /premium/{userId}   -> sube el usuario a PREMIUM
+ *   POST /downgrade/{userId} -> baja el usuario a GRATUITO
+ *
+ * Consul resuelve la URL automaticamente por nombre.
+ */
+@FeignClient(name = "auth-service")
 public interface AuthClient {
 
-   /**
-     * Actualizar usuario a PREMIUM
-     * Endpoint: POST /api/upgrade/premium/{userId}
-     */
     @PostMapping("/api/upgrade/premium/{userId}")
     void actualizarRolPremium(@PathVariable("userId") Integer userId);
 
-    /**
-     * Revertir usuario a GRATUITO
-     * Endpoint: POST /api/upgrade/downgrade/{userId}
-     */
-    @PostMapping("/api/upgrade/downgrade/{userId}")
-    void revertirAGratuito(@PathVariable("userId") Integer userId);
+    @PostMapping(value = "/api/upgrade/downgrade/{userId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    void revertirAGratuito(
+            @PathVariable("userId") Integer userId,
+            @RequestBody Map<String, String> body);
 }

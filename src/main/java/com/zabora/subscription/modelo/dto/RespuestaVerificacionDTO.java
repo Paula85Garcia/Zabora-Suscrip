@@ -8,22 +8,21 @@ import java.util.Map;
 
 @Data
 @Builder
-@Schema(description = "Respuesta de verificación de suscripción")
+@Schema(description = "Respuesta de verificacion de suscripcion")
 public class RespuestaVerificacionDTO {
-    
-    @Schema(description = "Indica si la suscripción es válida (premium activa)", 
-            example = "true")
+
+    @Schema(description = "Indica si la suscripcion es valida (premium activa)", example = "true")
     private Boolean valida;
-    
+
     @Schema(description = "Nombre del plan actual", example = "premium")
     private String plan;
-    
-    @Schema(description = "Estado de la suscripción", example = "ACTIVA")
+
+    @Schema(description = "Estado de la suscripcion", example = "ACTIVA")
     private String estado;
-    
-    @Schema(description = "Fecha de expiración del periodo actual")
+
+    @Schema(description = "Fecha de expiracion del periodo actual")
     private LocalDateTime fechaExpiracion;
-    
-    @Schema(description = "Límites del plan actual")
+
+    @Schema(description = "Limites del plan actual")
     private Map<String, Object> limites;
 }

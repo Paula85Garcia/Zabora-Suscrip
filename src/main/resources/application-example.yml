@@ -1,0 +1,94 @@
+# =============================================================================
+# Zabora Subscription Service — EJEMPLO (sin secretos reales)
+# El application.yml “principal” del repo está alineado con este archivo (placeholders).
+# Secretos: variables de entorno o application-local.yml (gitignored). Ver .env.example.
+# =============================================================================
+
+spring:
+  application:
+    name: zabora-subscription-service
+  cloud:
+    consul:
+      enabled: true
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        prefer-ip-address: true
+        service-name: zabora-subscription-service
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+      config:
+        enabled: false
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/zabora_subscriptions?sslMode=DISABLED&allowPublicKeyRetrieval=true}
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+server:
+  port: ${PORT:8004}
+
+mercadopago:
+  access-token: ${MP_ACCESS_TOKEN:}
+  public-key: ${MP_PUBLIC_KEY:}
+  environment: ${MP_ENVIRONMENT:test}
+  webhook:
+    secret: ${MP_WEBHOOK_SECRET:}
+    notification-url: ${MP_WEBHOOK_NOTIFICATION_URL:https://tu-dominio/api/webhooks/mercadopago}
+  success-url: ${MP_SUCCESS_URL:http://localhost:4200/suscripciones/exito}
+  failure-url: ${MP_FAILURE_URL:http://localhost:4200/suscripciones/checkout?payment=failure}
+  pending-url: ${MP_PENDING_URL:http://localhost:4200/suscripciones/checkout?payment=pending}
+
+email:
+  enabled: ${EMAIL_ENABLED:false}
+  from: ${EMAIL_FROM:noreply@example.com}
+  send-factura: ${EMAIL_SEND_FACTURA:true}
+  admin-notifications-enabled: ${EMAIL_ADMIN_NOTIFY:false}
+  admin-recipients: ${EMAIL_ADMIN_RECIPIENTS:}
+
+# Mismo secreto Base64 que auth-service / gateway (JWT).
+zabora:
+  subscription:
+    jwt:
+      secret: ${JWT_SECRET:}
+
+# Si Consul no resuelve auth-service, descomenta y ajusta el puerto de auth:
+# spring:
+#   cloud:
+#     openfeign:
+#       client:
+#         config:
+#           auth-service:
+#             url: http://127.0.0.1:8000
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 10000
+        readTimeout: 30000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,18 +1,24 @@
 package com.zabora.subscription.modelo.entidad;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "planes_suscripcion")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PlanSuscripcion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // INT en BD → Integer en Java (no Long, para evitar que Hibernate intente ALTER)
     private Integer id;
 
     @Column(name = "nombre", nullable = false, length = 50, unique = true)
@@ -25,25 +31,10 @@ public class PlanSuscripcion {
     private BigDecimal precio;
 
     @Column(name = "moneda", length = 3)
-    private String moneda = "COP";
-
-//    @Column(name = "limite_condiciones_medicas", nullable = false)
-//    private Integer limiteCondicionesMedicas = 0;
-//
-//    @Column(name = "limite_alergias", nullable = false)
-//    private Integer limiteAlergias = 0;
-//
-//    @Column(name = "limite_preferencias_alimentarias", nullable = false)
-//    private Integer limitePreferenciasAlimentarias = 0;
-//
-//    @Column(name = "ingredientes_por_busqueda", nullable = false)
-//    private Integer ingredientesPorBusqueda = 0;
-//
-//    @Column(name = "limite_recetas_favoritas")
-//    private Integer limiteRecetasFavoritas;
+    private String moneda;
 
     @Column(name = "activo")
-    private Boolean activo = true;
+    private Boolean activo;
 
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
@@ -51,8 +42,11 @@ public class PlanSuscripcion {
     @Column(name = "fecha_actualizacion")
     private LocalDateTime fechaActualizacion;
 
-    public PlanSuscripcion() {
-        this.fechaCreacion = LocalDateTime.now();
-        this.fechaActualizacion = LocalDateTime.now();
+    @PrePersist
+    public void prePersist() {
+        if (fechaCreacion == null) fechaCreacion = LocalDateTime.now();
+        if (fechaActualizacion == null) fechaActualizacion = LocalDateTime.now();
+        if (moneda == null) moneda = "COP";
+        if (activo == null) activo = true;
     }
 }

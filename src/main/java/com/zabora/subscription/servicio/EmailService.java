@@ -1,120 +1,148 @@
 package com.zabora.subscription.servicio;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zabora.subscription.modelo.entidad.Pago;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Correo transaccional (confirmación de pago, factura / comprobante solicitado por el usuario).
+ */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class EmailService {
-    
+
+    private static final ObjectMapper JSON = new ObjectMapper();
+
+    private final JavaMailSender mailSender;
+
     @Value("${email.enabled:false}")
     private boolean emailEnabled;
-    
+
+    @Value("${email.send-factura:true}")
+    private boolean sendFactura;
+
     @Value("${email.from:noreply@zabora.com}")
     private String emailFrom;
-    
+
     /**
-     * Envía confirmación de pago exitoso
+     * Envía confirmación de pago exitoso.
      */
     public void enviarConfirmacionPago(Pago pago) {
         if (!emailEnabled) {
-            log.info("[SIMULADO] Confirmación de pago enviada para: {}", pago.getUsuarioId());
+            log.info("[SIMULADO] Confirmacion de pago — usuario: {}", pago.getUsuarioId());
             return;
         }
-        
-        
-        String mensaje = construirMensajeConfirmacion(pago);
-        log.info("Email de confirmación: {}", mensaje);
+        String to = resolverEmailDestinoFactura(pago);
+        if (!StringUtils.hasText(to)) {
+            log.warn("Sin email destino para confirmación de pago {}", pago.getId());
+            return;
+        }
+        String cuerpo = construirMensajeConfirmacion(pago);
+        enviarCorreo(to, "[Zabora] Pago confirmado", cuerpo, false);
     }
-    
+
     /**
-     * Envía factura del pago
+     * Comprobante / factura simple por correo (sin PDF hasta integrar plantilla o MP).
      */
     public void enviarFacturaPago(Pago pago) {
-        if (!emailEnabled) {
-            log.info(" [SIMULADO] Factura enviada para: {}", pago.getUsuarioId());
+        if (!emailEnabled || !sendFactura) {
+            log.info("[SIMULADO] Factura/comprobante — pago: {}, usuario: {}", pago.getId(), pago.getUsuarioId());
             return;
         }
-        
-        // TODO: Implementar generación y envío de factura PDF
-        String mensaje = construirFactura(pago);
-        log.info(" Factura generada: {}", mensaje);
-    }
-    
-    /**
-     * Envía notificación de pago fallido
-     */
-    public void enviarNotificacionPagoFallido(Integer usuarioId, String motivo) {
-        if (!emailEnabled) {
-            log.info(" [SIMULADO] Notificación de fallo enviada para: {}", usuarioId);
+        String to = resolverEmailDestinoFactura(pago);
+        if (!StringUtils.hasText(to)) {
+            log.warn("Usuario solicitó factura pero no hay payerEmail en metadatos del pago {}", pago.getId());
             return;
         }
-        
-        log.info("Email de pago fallido: Usuario {}, Motivo: {}", usuarioId, motivo);
+        String cuerpo = construirCuerpoFactura(pago);
+        enviarCorreo(to, "[Zabora] Comprobante de pago — Suscripción Premium", cuerpo, false);
     }
-    
-    /**
-     * Envía recordatorio de renovación próxima
-     */
-    public void enviarRecordatorioRenovacion(Integer usuarioId, int diasRestantes) {
-        if (!emailEnabled) {
-            log.info(" [SIMULADO] Recordatorio de renovación: {} - {} días", 
-                    usuarioId, diasRestantes);
-            return;
+
+    private void enviarCorreo(String to, String subject, String text, boolean html) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, StandardCharsets.UTF_8.name());
+            helper.setFrom(emailFrom);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text, html);
+            mailSender.send(message);
+            log.info("Correo enviado: {} → {}", subject, to);
+        } catch (Exception e) {
+            log.error("Error enviando correo ({}): {}", subject, e.getMessage());
+            throw new IllegalStateException("No se pudo enviar el correo: " + e.getMessage(), e);
         }
-        
-        log.info("🔔 Recordatorio de renovación enviado a: {}", usuarioId);
     }
-    
+
+    private static String resolverEmailDestinoFactura(Pago pago) {
+        String m = pago.getMetadatos();
+        if (!StringUtils.hasText(m)) {
+            return null;
+        }
+        try {
+            JsonNode n = JSON.readTree(m);
+            JsonNode em = n.get("payerEmail");
+            if (em != null && em.isTextual() && StringUtils.hasText(em.asText())) {
+                return em.asText().trim();
+            }
+        } catch (Exception e) {
+            log.debug("Metadatos de pago no JSON o sin payerEmail: {}", e.getMessage());
+        }
+        return null;
+    }
+
     private String construirMensajeConfirmacion(Pago pago) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-        
-        return String.format("""
-            ¡Pago Exitoso!
-            
-            Tu suscripción Premium ha sido activada.
-            
-            Detalles del pago:
-            - Monto: $%s COP
-            - Fecha: %s
-            - Método: %s
-            - ID de transacción: %s
-            
-            Comprobante: %s
-            
-            ¡Gracias por confiar en Zabora!
-            """,
-            pago.getMonto(),
-            pago.getFechaPago().format(formatter),
-            pago.getMetodoPago(),
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        return String.format(
+            "Hola,\n\nTu pago fue confirmado.\n\nID pago: %s\nMonto: %s %s\nFecha: %s\n\nGracias por usar Zabora.\n",
             pago.getId(),
-            pago.getUrlComprobante() != null ? pago.getUrlComprobante() : "No disponible"
+            pago.getMonto(),
+            pago.getMoneda(),
+            pago.getFechaPago() != null ? pago.getFechaPago().format(fmt) : "N/A"
         );
     }
-    
-    private String construirFactura(Pago pago) {
-        return String.format("""
-            FACTURA DE VENTA
-            
-            Zabora S.A.S.
-            NIT: 900.123.456-7
-            
-            Cliente: %s
+
+    private String construirCuerpoFactura(Pago pago) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        return String.format(
+            """
+            Hola,
+
+            Este es tu comprobante de pago por la suscripción premium Zabora.
+
+            ID de pago: %s
+            Referencia suscripción: %s
+            Monto: %s %s
+            Método: %s
             Fecha: %s
-            
-            Concepto: Suscripción Premium Mensual
-            Valor: $%s COP
-            
-            Método de pago: %s
+            %s
+
+            Conserva este correo como respaldo. Si necesitas factura electrónica de venta, indícalo a soporte con este ID.
+
+            —
+            Zabora
             """,
-            pago.getUsuarioId(),
-            pago.getFechaPago(),
+            pago.getId(),
+            pago.getSuscripcionId(),
             pago.getMonto(),
-            pago.getMetodoPago()
+            pago.getMoneda(),
+            pago.getMetodoPago(),
+            pago.getFechaPago() != null ? pago.getFechaPago().format(fmt) : "N/A",
+            StringUtils.hasText(pago.getCodigoAutorizacion())
+                ? "Código autorización: " + pago.getCodigoAutorizacion()
+                : ""
         );
     }
 }
