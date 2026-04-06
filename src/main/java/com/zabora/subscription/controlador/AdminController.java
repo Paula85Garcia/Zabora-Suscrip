@@ -1,6 +1,5 @@
 package com.zabora.subscription.controlador;
 
-import com.zabora.subscription.data.UserContext;
 import com.zabora.subscription.excepcion.AuthServiceException;
 import com.zabora.subscription.servicio.AdminReportesServicio;
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,12 +72,14 @@ public class AdminController {
     public ResponseEntity<?> detalleSuscripcion(@PathVariable String id) {
         try {
             return ResponseEntity.ok(adminReportesServicio.obtenerDetallesSuscripcion(id));
-        } catch (RuntimeException e) {
-            log.warn("Suscripcion no encontrada: {}", id);
-            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            log.error("Error obteniendo detalle de suscripcion {}: {}", id, e.getMessage());
-            return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            if ("Suscripcion no encontrada".equals(msg)) {
+                log.warn("Suscripcion no encontrada: {}", id);
+                return ResponseEntity.status(404).body(Map.of("error", msg));
+            }
+            log.error("Error obteniendo detalle de suscripcion {}: {}", id, msg, e);
+            return ResponseEntity.internalServerError().body(Map.of("error", msg));
         }
     }
 

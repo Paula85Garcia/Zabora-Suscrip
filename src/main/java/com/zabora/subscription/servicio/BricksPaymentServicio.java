@@ -55,7 +55,7 @@ public class BricksPaymentServicio {
     private final EmailService emailService;
     private final ServicioNotificaciones servicioNotificaciones;
 
-    @Value("${mercadopago.notification-url}")
+    @Value("${mercadopago.webhook.notification-url}")
     private String notificationUrl;
 
     @Value("${mercadopago.pending-url}")

@@ -1,5 +1,6 @@
 package com.zabora.subscription.modelo.entidad;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.zabora.subscription.modelo.enumeracion.EstadoSuscripcion;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -63,6 +64,9 @@ public class UsuarioSuscripcion {
     private LocalDateTime fechaActualizacion;
 
     // FIX BUG-5: Usar @JoinColumn en vez de mappedBy="suscripcionId"
+    // @JsonIgnore: evita LazyInitializationException al serializar JSON fuera de sesión
+    // (p. ej. GET /api/admin/suscripciones/{id} devuelve pagos en clave aparte del mapa).
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "suscripcion_id")
     private List<Pago> pagos = new ArrayList<>();
